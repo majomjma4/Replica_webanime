@@ -595,13 +595,7 @@
         </span>
       </a>
 
-      <div class="hidden md:flex items-center gap-8" id="main-menu">
-  <a href="<?= route_path('home') ?>" data-menu-item="Inicio" data-menu-icon="home" class="transition-colors">Inicio</a>
-  <a href="<?= route_path('series') ?>" data-menu-item="Animes" data-menu-icon="live_tv" class="transition-colors">Animes</a>
-  <a href="<?= route_path('movies') ?>" data-menu-item="Peliculas" data-menu-icon="movie" class="transition-colors">Peliculas</a>
-  <a href="<?= route_path('featured') ?>" data-menu-item="Destacados" data-menu-icon="star" class="transition-colors">Destacados</a>
-  <a href="<?= route_path('ranking') ?>" data-menu-item="Ranking" data-menu-icon="leaderboard" class="transition-colors">Ranking</a>
-</div>
+      <div class="hidden md:flex items-center gap-8" id="main-menu"></div>
       <a id="admin-mode-btn" href="<?= route_path('admin') ?>" class="hidden md:inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-amber-200 hover:bg-amber-500/20 hover:border-amber-300/70 transition-colors" style="display:none;">
         <span class="material-symbols-outlined text-[16px]">shield_person</span>
         Modo Admin
@@ -669,7 +663,7 @@
               />
             </button>
             <div
-              class="absolute right-0 mt-3 hidden z-50 w-56 rounded-2xl border border-white/10 bg-zinc-900/95 bg-surface-container-high p-4 shadow-[0_20px_45px_rgba(0,0,0,0.45)]"
+              class="absolute right-0 mt-3 hidden w-56 rounded-2xl border border-white/10 bg-zinc-900/95 bg-surface-container-high p-4 shadow-[0_20px_45px_rgba(0,0,0,0.45)]"
               data-guest-menu
               role="menu"
             >

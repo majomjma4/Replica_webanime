@@ -272,6 +272,10 @@ if (!function_exists('route_path')) {
             'register' => 'registro',
             'login' => 'ingresar',
             'admin' => 'admin',
+            'admin_manage' => 'gestion',
+            'admin_users' => 'gesus',
+            'admin_comments' => 'gescom',
+            'add' => 'anadir',
             'user' => 'user',
         ];
 
@@ -291,7 +295,8 @@ if (!function_exists('e')) {
     }
 }
 
-app_publish_csrf_cookie();
+// Delay CSRF cookie publishing until after CI4 initializes the session.
+// app_publish_csrf_cookie();
 
 spl_autoload_register(static function (string $class): void {
     $prefix = 'ReplicaCi4\\';
@@ -305,5 +310,7 @@ spl_autoload_register(static function (string $class): void {
         require_once $path;
     }
 });
+
+
 
 

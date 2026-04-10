@@ -66,8 +66,11 @@ final class Pages extends BaseController
             return;
         }
 
-        $viewPath = APP_ROOT . '/Views/pages/' . $slug . '.php';
-        $viewName = is_file($viewPath) ? 'pages/' . $slug : 'pages/basic';
+        $viewCandidates = [
+            APP_ROOT . '/Views/pages/' . $slug . '.php',
+            APP_ROOT . '/Views/Views/pages/' . $slug . '.php',
+        ];
+        $viewName = is_file($viewCandidates[0]) || is_file($viewCandidates[1]) ? 'pages/' . $slug : 'pages/basic';
 
         $this->render($viewName, [
             'slug' => $slug,
@@ -162,4 +165,8 @@ final class Pages extends BaseController
         ];
     }
 }
+
+
+
+
 
