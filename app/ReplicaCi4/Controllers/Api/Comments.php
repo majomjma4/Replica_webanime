@@ -4,84 +4,69 @@ declare(strict_types=1);
 
 namespace ReplicaCi4\Controllers\Api;
 
-use Exception;
-use PDO;
-use ReplicaCi4\Models\Database;
+use ReplicaCi4\Controllers\BaseController;
+use Throwable;
 
-final class Comments
+final class Comments extends BaseController
 {
-    public function handle(): void
+    public function handle()
     {
-        header('Content-Type: application/json; charset=UTF-8');
-
-        $action = (string) ($_GET['action'] ?? 'list');
+        $session = session();
+        $action = (string) $this->request->getGet('action') ?: 'list';
         $writeActions = ['report', 'delete', 'add', 'moderate', 'seed'];
+
         if (in_array($action, $writeActions, true)) {
-            app_require_method('POST');
+            if ($this->request->getMethod(true) !== 'POST') {
+                return $this->response->setStatusCode(405)->setJSON(['success' => false, 'error' => 'Metodo no permitido']);
+            }
             app_verify_csrf();
-            app_start_session();
         } else {
-            app_require_method('GET');
-            app_start_session();
+            if ($this->request->getMethod(true) !== 'GET') {
+                return $this->response->setStatusCode(405)->setJSON(['success' => false, 'error' => 'Metodo no permitido']);
+            }
         }
 
-        $data = app_get_json_input();
-        $db = (new Database())->getConnection(false);
-        if (!$db instanceof PDO) {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'error' => 'Error de conexion a la base de datos']);
-            return;
-        }
+        $data = $this->request->getJSON(true) ?: [];
+        $db = \Config\Database::connect();
 
-        $resolveAdminAccess = static function (PDO $dbConn, int $userId, string $sessionRole = ''): bool {
+        $resolveAdminAccess = static function (\CodeIgniter\Database\BaseConnection $dbConn, int $userId, string $sessionRole = ''): bool {
             $normalizedRole = strtolower(trim($sessionRole));
             if (in_array($normalizedRole, ['admin', 'administrador'], true)) {
                 return true;
             }
-            if ($userId <= 0) {
-                return false;
-            }
+            if ($userId <= 0) return false;
             try {
-                $stmt = $dbConn->prepare("SELECT COALESCE(r.nombre, '') AS role_name FROM usuarios u LEFT JOIN roles r ON r.id = u.rol_id WHERE u.id = ? LIMIT 1");
-                $stmt->execute([$userId]);
-                $dbRole = strtolower(trim((string) $stmt->fetchColumn()));
+                $roleResult = $dbConn->table('usuarios u')
+                                     ->select('COALESCE(r.nombre, \'\') AS role_name')
+                                     ->join('roles r', 'r.id = u.rol_id', 'left')
+                                     ->where('u.id', $userId)
+                                     ->get()->getRowArray();
+                                     
+                $dbRole = strtolower(trim((string) ($roleResult['role_name'] ?? '')));
                 return in_array($dbRole, ['admin', 'administrador'], true);
-            } catch (Exception) {
+            } catch (Throwable) {
                 return false;
             }
-        };
-
-        $resolveSessionUserId = static function (PDO $dbConn, int $userId, string $username = ''): int {
-            $cleanUsername = trim($username);
-            if ($cleanUsername !== '') {
-                try {
-                    $stmt = $dbConn->prepare('SELECT id FROM usuarios WHERE nombre_mostrar = ? LIMIT 1');
-                    $stmt->execute([$cleanUsername]);
-                    $resolved = (int) ($stmt->fetchColumn() ?: 0);
-                    if ($resolved > 0) {
-                        return $resolved;
-                    }
-                } catch (Exception) {
-                }
-            }
-            return $userId > 0 ? $userId : 0;
         };
 
         if ($action === 'list') {
             try {
-                $animeLookupId = isset($_GET['anime_mal_id']) ? (int) $_GET['anime_mal_id'] : 0;
+                $animeLookupId = (int) $this->request->getGet('anime_mal_id') ?: 0;
+
                 $sql = "SELECT c.id, c.cuerpo AS msg, c.puntuacion AS rating, CASE WHEN rr.report_count > 0 THEN 1 ELSE 0 END AS flagged, c.creado_en, c.autor_externo, u.nombre_mostrar AS user, u.es_premium, a.titulo AS anime, a.mal_id AS anime_mal_id, c.fuente AS source, COALESCE(r.nombre, 'Registrado') AS raw_role, COALESCE(rr.report_count, 0) AS report_count, COALESCE(lr.razon, '') AS report_reason, COALESCE(reporter.nombre_mostrar, '') AS reported_by, COALESCE(dr.estado, '') AS deleted_status, COALESCE(deleter.nombre_mostrar, '') AS deleted_by, COALESCE(mr.estado, '') AS reviewed_status, COALESCE(reviewer.nombre_mostrar, '') AS reviewed_by, mr.revisado_en AS reviewed_at FROM comentarios c INNER JOIN usuarios u ON c.usuario_id = u.id INNER JOIN anime a ON c.anime_id = a.id LEFT JOIN roles r ON r.id = u.rol_id LEFT JOIN (SELECT comentario_id, COUNT(*) AS report_count FROM reportes_comentarios WHERE estado IN ('pendiente', 'en_revision') GROUP BY comentario_id) rr ON rr.comentario_id = c.id LEFT JOIN (SELECT rc1.comentario_id, rc1.razon, rc1.reportado_por FROM reportes_comentarios rc1 INNER JOIN (SELECT comentario_id, MAX(id) AS max_id FROM reportes_comentarios WHERE estado IN ('pendiente', 'en_revision', 'Revisado') GROUP BY comentario_id) latest ON latest.max_id = rc1.id) lr ON lr.comentario_id = c.id LEFT JOIN usuarios reporter ON reporter.id = lr.reportado_por LEFT JOIN (SELECT rc2.comentario_id, rc2.estado, rc2.reportado_por FROM reportes_comentarios rc2 INNER JOIN (SELECT comentario_id, MAX(id) AS max_id FROM reportes_comentarios WHERE estado = 'Eliminado' GROUP BY comentario_id) deleted_latest ON deleted_latest.max_id = rc2.id) dr ON dr.comentario_id = c.id LEFT JOIN usuarios deleter ON deleter.id = dr.reportado_por LEFT JOIN (SELECT rc3.comentario_id, rc3.estado, rc3.revisado_por, rc3.revisado_en FROM reportes_comentarios rc3 INNER JOIN (SELECT comentario_id, MAX(id) AS max_id FROM reportes_comentarios WHERE estado = 'Revisado' GROUP BY comentario_id) reviewed_latest ON reviewed_latest.max_id = rc3.id) mr ON mr.comentario_id = c.id LEFT JOIN usuarios reviewer ON reviewer.id = mr.revisado_por";
+                
+                $bindings = [];
                 if ($animeLookupId > 0) {
-                    $sql .= " WHERE (a.mal_id = :anime_lookup_id OR a.id = :anime_lookup_id) AND NOT EXISTS (SELECT 1 FROM reportes_comentarios hidden_rc WHERE hidden_rc.comentario_id = c.id AND hidden_rc.estado = 'Eliminado')";
+                    $sql .= " WHERE (a.mal_id = ? OR a.id = ?) AND NOT EXISTS (SELECT 1 FROM reportes_comentarios hidden_rc WHERE hidden_rc.comentario_id = c.id AND hidden_rc.estado = 'Eliminado')";
+                    $bindings = [$animeLookupId, $animeLookupId];
                 }
                 $sql .= ' ORDER BY c.creado_en DESC';
-                $stmt = $db->prepare($sql);
-                if ($animeLookupId > 0) {
-                    $stmt->bindValue(':anime_lookup_id', $animeLookupId, PDO::PARAM_INT);
-                }
-                $stmt->execute();
+                
+                $query = $db->query($sql, $bindings);
+                $rows = $query->getResultArray();
+                
                 $comments = [];
-                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                foreach ($rows as $row) {
                     $isAdmin = strtolower((string) ($row['raw_role'] ?? '')) === 'admin';
                     $isPremium = (int) ($row['es_premium'] ?? 0) === 1;
                     $roleStr = $isAdmin ? 'ADMINISTRADOR' : ($isPremium ? 'PREMIUM' : 'REGISTRADO');
@@ -108,164 +93,174 @@ final class Comments
                         'reviewed_at' => !empty($row['reviewed_at']) ? date('M d, Y h:i A', strtotime((string) $row['reviewed_at'])) : '',
                     ];
                 }
-                echo json_encode(['success' => true, 'data' => $comments]);
-            } catch (Exception $exception) {
-                echo json_encode(['success' => false, 'error' => $exception->getMessage()]);
+                return $this->response->setJSON(['success' => true, 'data' => $comments]);
+            } catch (Throwable $exception) {
+                return $this->response->setJSON(['success' => false, 'error' => $exception->getMessage()]);
             }
-            return;
         }
 
         if ($action === 'add') {
-            $userId = (int) ($_SESSION['user_id'] ?? 0);
+            $userId = (int) ($session->get('user_id') ?? 0);
             $animeMalId = (int) ($data['anime_mal_id'] ?? 0);
             $rating = (int) ($data['rating'] ?? 0);
             $message = trim((string) ($data['message'] ?? ''));
             if ($userId <= 0 || $animeMalId <= 0 || $rating < 1 || $rating > 5 || $message === '') {
-                echo json_encode(['success' => false, 'error' => 'Datos invalidos para comentar']);
-                return;
+                return $this->response->setJSON(['success' => false, 'error' => 'Datos invalidos para comentar']);
             }
             try {
-                $animeStmt = $db->prepare('SELECT id FROM anime WHERE mal_id = ? OR id = ? LIMIT 1');
-                $animeStmt->execute([$animeMalId, $animeMalId]);
-                $animeId = (int) ($animeStmt->fetchColumn() ?: 0);
-                if ($animeId <= 0) {
-                    echo json_encode(['success' => false, 'error' => 'No se encontro el anime en la base de datos']);
-                    return;
+                $anime = $db->table('anime')->select('id')->where('mal_id', $animeMalId)->orWhere('id', $animeMalId)->get()->getRowArray();
+                if (!$anime) {
+                    return $this->response->setJSON(['success' => false, 'error' => 'No se encontro el anime en la base de datos']);
                 }
-                $stmt = $db->prepare("INSERT INTO comentarios (usuario_id, anime_id, cuerpo, puntuacion, fuente, creado_en) VALUES (?, ?, ?, ?, 'usuario', NOW())");
-                $stmt->execute([$userId, $animeId, $message, $rating]);
-                echo json_encode(['success' => true, 'id' => (int) $db->lastInsertId()]);
-            } catch (Exception $exception) {
-                echo json_encode(['success' => false, 'error' => $exception->getMessage()]);
+                $db->table('comentarios')->insert([
+                    'usuario_id' => $userId, 
+                    'anime_id' => (int) $anime['id'], 
+                    'cuerpo' => $message, 
+                    'puntuacion' => $rating, 
+                    'fuente' => 'usuario', 
+                    'creado_en' => date('Y-m-d H:i:s')
+                ]);
+                return $this->response->setJSON(['success' => true, 'id' => $db->insertID()]);
+            } catch (Throwable $exception) {
+                return $this->response->setJSON(['success' => false, 'error' => $exception->getMessage()]);
             }
-            return;
         }
 
         if ($action === 'report') {
             $commentId = (int) ($data['comment_id'] ?? 0);
             $reason = trim((string) ($data['reason'] ?? ''));
-            $reporterId = (int) ($_SESSION['user_id'] ?? 0);
+            $reporterId = (int) ($session->get('user_id') ?? 0);
             if ($reporterId <= 0 || $commentId <= 0 || $reason === '') {
-                echo json_encode(['success' => false, 'error' => 'Datos invalidos para reportar']);
-                return;
+                return $this->response->setJSON(['success' => false, 'error' => 'Datos invalidos para reportar']);
             }
             try {
-                $checkStmt = $db->prepare('SELECT id FROM comentarios WHERE id = ?');
-                $checkStmt->execute([$commentId]);
-                if (!$checkStmt->fetchColumn()) {
-                    echo json_encode(['success' => false, 'error' => 'El comentario no existe']);
-                    return;
+                if ($db->table('comentarios')->where('id', $commentId)->countAllResults() === 0) {
+                    return $this->response->setJSON(['success' => false, 'error' => 'El comentario no existe']);
                 }
-                $dupStmt = $db->prepare("SELECT id FROM reportes_comentarios WHERE comentario_id = ? AND reportado_por = ? AND estado IN ('pendiente', 'en_revision')");
-                $dupStmt->execute([$commentId, $reporterId]);
-                if ($dupStmt->fetchColumn()) {
-                    echo json_encode(['success' => false, 'error' => 'Ya reportaste este comentario']);
-                    return;
+                if ($db->table('reportes_comentarios')->where('comentario_id', $commentId)->where('reportado_por', $reporterId)->whereIn('estado', ['pendiente', 'en_revision'])->countAllResults() > 0) {
+                    return $this->response->setJSON(['success' => false, 'error' => 'Ya reportaste este comentario']);
                 }
-                $stmt = $db->prepare("INSERT INTO reportes_comentarios (comentario_id, reportado_por, razon, estado, creado_en) VALUES (?, ?, ?, 'pendiente', NOW())");
-                $stmt->execute([$commentId, $reporterId, $reason]);
-                echo json_encode(['success' => true]);
-            } catch (Exception $exception) {
-                echo json_encode(['success' => false, 'error' => $exception->getMessage()]);
+
+                $db->table('reportes_comentarios')->insert([
+                    'comentario_id' => $commentId, 
+                    'reportado_por' => $reporterId, 
+                    'razon' => $reason, 
+                    'estado' => 'pendiente', 
+                    'creado_en' => date('Y-m-d H:i:s')
+                ]);
+                return $this->response->setJSON(['success' => true]);
+            } catch (Throwable $exception) {
+                return $this->response->setJSON(['success' => false, 'error' => $exception->getMessage()]);
             }
-            return;
         }
 
         if ($action === 'delete') {
             $commentId = (int) ($data['id'] ?? 0);
-            $userId = (int) ($_SESSION['user_id'] ?? 0);
-            $role = (string) ($_SESSION['role'] ?? 'Registrado');
+            $userId = (int) ($session->get('user_id') ?? 0);
+            $role = (string) ($session->get('role') ?? 'Registrado');
             if ($commentId <= 0 || $userId <= 0) {
-                echo json_encode(['success' => false, 'error' => 'Datos invalidos']);
-                return;
+                return $this->response->setJSON(['success' => false, 'error' => 'Datos invalidos']);
             }
             try {
-                $ownerStmt = $db->prepare('SELECT usuario_id FROM comentarios WHERE id = ?');
-                $ownerStmt->execute([$commentId]);
-                $ownerId = (int) ($ownerStmt->fetchColumn() ?: 0);
-                if ($ownerId <= 0) {
-                    echo json_encode(['success' => false, 'error' => 'El comentario no existe']);
-                    return;
+                $ownerObj = $db->table('comentarios')->select('usuario_id')->where('id', $commentId)->get()->getRowArray();
+                if (!$ownerObj) {
+                    return $this->response->setJSON(['success' => false, 'error' => 'El comentario no existe']);
                 }
+                $ownerId = (int) $ownerObj['usuario_id'];
                 $isAdmin = $resolveAdminAccess($db, $userId, $role);
+                
                 if ($ownerId !== $userId && !$isAdmin) {
-                    echo json_encode(['success' => false, 'error' => 'Solo puedes ocultar tus propios comentarios o administrar como admin']);
-                    return;
+                    return $this->response->setJSON(['success' => false, 'error' => 'Solo puedes ocultar tus propios comentarios o administrar como admin']);
                 }
+
                 if (!$isAdmin) {
-                    $reportCheckStmt = $db->prepare("SELECT COUNT(*) FROM reportes_comentarios WHERE comentario_id = ? AND estado IN ('pendiente', 'en_revision', 'Revisado')");
-                    $reportCheckStmt->execute([$commentId]);
-                    $hasReports = (int) ($reportCheckStmt->fetchColumn() ?: 0) > 0;
+                    $hasReports = $db->table('reportes_comentarios')
+                                     ->where('comentario_id', $commentId)
+                                     ->whereIn('estado', ['pendiente', 'en_revision', 'Revisado'])
+                                     ->countAllResults() > 0;
+                                     
                     if (!$hasReports) {
-                        $deleteStmt = $db->prepare('DELETE FROM comentarios WHERE id = ? AND usuario_id = ?');
-                        $deleteStmt->execute([$commentId, $userId]);
-                        echo json_encode(['success' => true, 'mode' => 'hard_deleted']);
-                        return;
+                        $db->table('comentarios')->where('id', $commentId)->where('usuario_id', $userId)->delete();
+                        return $this->response->setJSON(['success' => true, 'mode' => 'hard_deleted']);
                     }
                 }
-                $baseStmt = $db->prepare('SELECT id FROM reportes_comentarios WHERE comentario_id = ? ORDER BY id ASC LIMIT 1');
-                $baseStmt->execute([$commentId]);
-                $baseReportId = (int) ($baseStmt->fetchColumn() ?: 0);
-                if ($baseReportId > 0) {
-                    $stmt = $db->prepare('UPDATE reportes_comentarios SET estado = ?, revisado_por = ?, revisado_en = NOW() WHERE id = ?');
-                    $stmt->execute(['Eliminado', $userId, $baseReportId]);
+                
+                $baseReport = $db->table('reportes_comentarios')->select('id')->where('comentario_id', $commentId)->orderBy('id', 'ASC')->get()->getRowArray();
+                if ($baseReport) {
+                    $db->table('reportes_comentarios')->where('id', $baseReport['id'])->update([
+                        'estado' => 'Eliminado', 
+                        'revisado_por' => $userId, 
+                        'revisado_en' => date('Y-m-d H:i:s')
+                    ]);
                 } else {
-                    $stmt = $db->prepare("INSERT INTO reportes_comentarios (comentario_id, reportado_por, razon, estado, revisado_por, revisado_en, creado_en) VALUES (?, ?, ?, ?, ?, NOW(), NOW())");
-                    $stmt->execute([$commentId, $userId, 'Comentario eliminado', 'Eliminado', $userId]);
+                    $db->table('reportes_comentarios')->insert([
+                        'comentario_id' => $commentId, 
+                        'reportado_por' => $userId, 
+                        'razon' => 'Comentario eliminado', 
+                        'estado' => 'Eliminado', 
+                        'revisado_por' => $userId, 
+                        'revisado_en' => date('Y-m-d H:i:s'), 
+                        'creado_en' => date('Y-m-d H:i:s')
+                    ]);
                 }
-                echo json_encode(['success' => true]);
-            } catch (Exception $exception) {
-                echo json_encode(['success' => false, 'error' => $exception->getMessage()]);
+                return $this->response->setJSON(['success' => true]);
+            } catch (Throwable $exception) {
+                return $this->response->setJSON(['success' => false, 'error' => $exception->getMessage()]);
             }
-            return;
         }
 
         if ($action === 'moderate') {
             $commentId = (int) ($data['id'] ?? 0);
             $decision = trim((string) ($data['decision'] ?? ''));
-            $adminId = $resolveSessionUserId($db, (int) ($_SESSION['user_id'] ?? 0), (string) ($_SESSION['username'] ?? ''));
-            $role = (string) ($_SESSION['role'] ?? '');
+            $adminId = (int) ($session->get('user_id') ?? 0);
+            $role = (string) ($session->get('role') ?? '');
+            
             $isModerator = $resolveAdminAccess($db, $adminId, $role);
             if ($commentId <= 0 || !$isModerator || !in_array($decision, ['review', 'delete'], true)) {
-                echo json_encode(['success' => false, 'error' => 'Solo un administrador puede moderar comentarios']);
-                return;
+                return $this->response->setJSON(['success' => false, 'error' => 'Solo un administrador puede moderar comentarios']);
             }
             try {
-                $checkStmt = $db->prepare('SELECT id FROM comentarios WHERE id = ?');
-                $checkStmt->execute([$commentId]);
-                if (!$checkStmt->fetchColumn()) {
-                    echo json_encode(['success' => false, 'error' => 'El comentario no existe']);
-                    return;
+                if ($db->table('comentarios')->where('id', $commentId)->countAllResults() === 0) {
+                    return $this->response->setJSON(['success' => false, 'error' => 'El comentario no existe']);
                 }
+                
                 $status = $decision === 'review' ? 'Revisado' : 'Eliminado';
                 $reason = $decision === 'review' ? 'Revision administrativa' : 'Comentario eliminado por administrador';
-                $baseStmt = $db->prepare('SELECT id FROM reportes_comentarios WHERE comentario_id = ? ORDER BY id ASC LIMIT 1');
-                $baseStmt->execute([$commentId]);
-                $baseReportId = (int) ($baseStmt->fetchColumn() ?: 0);
-                if ($baseReportId > 0) {
-                    $stmt = $db->prepare('UPDATE reportes_comentarios SET estado = ?, revisado_por = ?, revisado_en = NOW() WHERE id = ?');
-                    $stmt->execute([$status, $adminId, $baseReportId]);
+                
+                $baseReport = $db->table('reportes_comentarios')->select('id')->where('comentario_id', $commentId)->orderBy('id', 'ASC')->get()->getRowArray();
+                if ($baseReport) {
+                    $db->table('reportes_comentarios')->where('id', $baseReport['id'])->update([
+                        'estado' => $status, 
+                        'revisado_por' => $adminId, 
+                        'revisado_en' => date('Y-m-d H:i:s')
+                    ]);
                 } else {
-                    $stmt = $db->prepare("INSERT INTO reportes_comentarios (comentario_id, reportado_por, razon, estado, revisado_por, revisado_en, creado_en) VALUES (?, ?, ?, ?, ?, NOW(), NOW())");
-                    $stmt->execute([$commentId, $adminId, $reason, $status, $adminId]);
+                    $db->table('reportes_comentarios')->insert([
+                        'comentario_id' => $commentId, 
+                        'reportado_por' => $adminId, 
+                        'razon' => $reason, 
+                        'estado' => $status, 
+                        'revisado_por' => $adminId, 
+                        'revisado_en' => date('Y-m-d H:i:s'), 
+                        'creado_en' => date('Y-m-d H:i:s')
+                    ]);
                 }
-                echo json_encode(['success' => true, 'status' => $status]);
-            } catch (Exception $exception) {
-                echo json_encode(['success' => false, 'error' => $exception->getMessage()]);
+                return $this->response->setJSON(['success' => true, 'status' => $status]);
+            } catch (Throwable $exception) {
+                return $this->response->setJSON(['success' => false, 'error' => $exception->getMessage()]);
             }
-            return;
         }
 
         if ($action === 'seed') {
             try {
-                $db->exec("INSERT INTO comentarios (usuario_id, anime_id, cuerpo) SELECT u.id, a.id, 'La animacion en esta escena es absolutamente espectacular! MAPPA God.' FROM usuarios u CROSS JOIN anime a LIMIT 1; INSERT INTO comentarios (usuario_id, anime_id, cuerpo) SELECT u.id, a.id, 'El desarrollo del villano es espectacular. 10/10' FROM usuarios u CROSS JOIN anime a ORDER BY u.id DESC, a.id DESC LIMIT 1;");
-                echo json_encode(['success' => true]);
-            } catch (Exception $exception) {
-                echo json_encode(['success' => false, 'error' => $exception->getMessage()]);
+                $db->query("INSERT INTO comentarios (usuario_id, anime_id, cuerpo) SELECT u.id, a.id, 'La animacion en esta escena es absolutamente espectacular! MAPPA God.' FROM usuarios u CROSS JOIN anime a LIMIT 1");
+                $db->query("INSERT INTO comentarios (usuario_id, anime_id, cuerpo) SELECT u.id, a.id, 'El desarrollo del villano es espectacular. 10/10' FROM usuarios u CROSS JOIN anime a ORDER BY u.id DESC, a.id DESC LIMIT 1");
+                return $this->response->setJSON(['success' => true]);
+            } catch (Throwable $exception) {
+                return $this->response->setJSON(['success' => false, 'error' => $exception->getMessage()]);
             }
-            return;
         }
 
-        echo json_encode(['success' => false, 'error' => 'Accion desconocida']);
+        return $this->response->setJSON(['success' => false, 'error' => 'Accion desconocida']);
     }
 }

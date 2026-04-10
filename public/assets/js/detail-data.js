@@ -335,22 +335,6 @@ const AniDexDetailDataBoot = () => {
       selectedId = full.mal_id;
       isLocal = true;
       
-      // COMPLEMENT: If local data is sparse, fetch full Jikan info to fill gaps
-      const needsComplement = !full.studios?.length || !full.genres?.length || (full.synopsis || "").length < 50 || !full.title_english || !full.title_japanese;
-      if (needsComplement && selectedId) {
-        const jikanFull = await byId(selectedId, "full");
-        if (jikanFull) {
-            if (!full.studios?.length && jikanFull.studios?.length) full.studios = jikanFull.studios;
-            if (!full.genres?.length && jikanFull.genres?.length) full.genres = jikanFull.genres;
-            if ((!full.synopsis || full.synopsis.length < 50) && jikanFull.synopsis) full.synopsis = jikanFull.synopsis;
-            if (!full.duration && jikanFull.duration) full.duration = jikanFull.duration;
-            if (!full.rating && jikanFull.rating) full.rating = jikanFull.rating;
-            if (!full.rank && jikanFull.rank) full.rank = jikanFull.rank;
-            if (!full.score && jikanFull.score) full.score = jikanFull.score;
-            if (!full.title_english && jikanFull.title_english) full.title_english = jikanFull.title_english;
-            if (!full.title_japanese && jikanFull.title_japanese) full.title_japanese = jikanFull.title_japanese;
-        }
-      }
       // Safety Fallback: Never show N/A if we have the main title
       if (!full.title_english) full.title_english = full.title;
       if (!full.title_japanese) full.title_japanese = full.title;
@@ -388,9 +372,9 @@ const AniDexDetailDataBoot = () => {
       localStorage.setItem(mapKey, JSON.stringify(map));
     } catch {}
     const [chars, vids, pics] = await Promise.all([
-      (isLocal && full.characters && full.characters.length > 0) ? Promise.resolve(full.characters) : byId(selectedId, "characters").then((data) => data || []),
-      (isLocal && full.videos && (full.videos.promo?.length > 0)) ? Promise.resolve(full.videos) : byId(selectedId, "videos").then((data) => data || {}),
-      (isLocal && full.pictures && full.pictures.length > 0) ? Promise.resolve(full.pictures) : byId(selectedId, "pictures").then((data) => data || [])
+      isLocal ? Promise.resolve(full.characters || []) : byId(selectedId, "characters").then((data) => data || []),
+      isLocal ? Promise.resolve(full.videos || {}) : byId(selectedId, "videos").then((data) => data || {}),
+      isLocal ? Promise.resolve(full.pictures || []) : byId(selectedId, "pictures").then((data) => data || [])
     ]);
 
     if (full && full.mal_id) {

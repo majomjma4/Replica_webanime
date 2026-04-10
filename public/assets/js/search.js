@@ -1,5 +1,5 @@
 (() => {
-  const API_BASE = "api/jikan_proxy";
+  const API_BASE = "api/jikan_proxy.php";
   const suggestCache = new Map();
   const hasJapaneseChars = (v) => /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(v || "");
 
@@ -9,7 +9,7 @@
   const logActivity = async (action, details = "") => {
     if (!isLoggedIn) return;
     try {
-      await fetch("api/activity", {
+      await fetch("api/activity.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, details })
@@ -500,7 +500,6 @@
       const b = ensureBox();
       if (!b) return;
       b.innerHTML = "";
-      b.dataset.mode = term ? "search" : "popular";
       if (!items.length) {
         closeBox();
         return;
@@ -555,23 +554,19 @@
       const term = (input.value || "").trim();
       if (term) return;
       const isHeaderSearch = input.id !== "filter-search" && input.getAttribute("data-catalog-search") !== "1";
-      const items = await fetchPopularSuggestions(isHeaderSearch ? "mixed" : pageContext());
+      if (!isHeaderSearch) return;
+      const items = await fetchPopularSuggestions("mixed");
       renderSuggestions(items, "");
     });
 
     input.addEventListener("input", () => {
+      const isHeaderSearch = input.id !== "filter-search" && input.getAttribute("data-catalog-search") !== "1";
+      if (!isHeaderSearch) return;
       const term = (input.value || "").trim();
       if (!term) {
         closeBox();
         return;
       }
-      const b = ensureBox();
-      if (b && b.dataset.mode === "popular") {
-        b.dataset.mode = "search";
-        b.innerHTML = `<div class="px-3 py-2 text-xs text-zinc-400">Buscando...</div>`;
-        openBox();
-      }
-
       clearTimeout(timer);
       timer = setTimeout(async () => {
         const local = getLocalSuggestions(term);
@@ -631,12 +626,8 @@
   };
 
   const init = () => {
-    const navInputs = Array.from(document.querySelectorAll('input[placeholder*="Buscar"]')).filter((el) => {
-      if (el.id === "filter-search") return false;
-      if (el.dataset.noSuggest === "1" || el.dataset.noSuggest === "true") return false;
-      if (el.closest("[data-genre-dropdown],[data-year-dropdown],[data-genre-panel],[data-year-panel]")) return false;
-      return true;
-    });
+    const navInputs = Array.from(document.querySelectorAll('input[placeholder*="Buscar"]'))
+      .filter((el) => el.id !== "filter-search");
     navInputs.forEach(bindInput);
 
     const filterInput = document.querySelector('[data-catalog-search="1"]') || document.getElementById("filter-search");
@@ -678,7 +669,6 @@
 
   window.AniDexSearch = { init };
 })();
-
 
 
 

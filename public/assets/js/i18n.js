@@ -42,10 +42,10 @@
     ["populares", "Popular"],
     ["popularidad", "Popularity"],
     ["pelÃ­culas", "Movies"],
-    ["películas", "Movies"],
+    ["pel\u00edculas", "Movies"],
     ["fantasy", "Fantasy"],
     ["fancy", "Fantasy"],
-    ["películas populares", "Popular Movies"],
+    ["pel\u00edculas populares", "Popular Movies"],
     ["destacados de la temporada", "Season Highlights"],
     ["estreno invierno 2024", "Winter 2024 Premiere"],
     ["ver ahora", "Watch Now"],
@@ -54,17 +54,16 @@
     ["favoritos", "Favorites"],
     ["politica de privacidad", "Privacy Policy"],
     ["terminos de servicio", "Terms of Service"],
-    ["documentacion api", "API Documentation"],
-    ["estudio", "Studio"],
-    ["estudio:", "Studio:"],
-    ["studio", "Studio"],
-    ["studio:", "Studio:"]
+    ["documentacion api", "API Documentation"]
+    ,["estudio", "Studio"]
+    ,["estudio:", "Studio:"]
+    ,["studio", "Studio"]
+    ,["studio:", "Studio:"]
   ]);
 
   const textNodes = [];
   const attrNodes = [];
   const cache = loadCache();
-  const inflight = new Map();
 
   function loadCache() {
     try {
@@ -98,6 +97,8 @@
       .replaceAll("\u00C3\u00BA", "")
       .replaceAll("\u00C3\u00B1", "")
       .replaceAll("\u00C3", "")
+      .replaceAll("", "")
+      .replaceAll("", "")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .trim();
@@ -153,34 +154,22 @@
     const key = normalize(source).toLowerCase();
     if (forcedMap.has(key)) return raw.replace(source, forcedMap.get(key));
     if (cache[key]) return raw.replace(source, cache[key]);
-    if (inflight.has(key)) {
-      const pending = await inflight.get(key);
-      return raw.replace(source, pending || source);
+
+    try {
+      const url =
+        "https://translate.googleapis.com/translate_a/single?client=gtx&sl=es&tl=en&dt=t&q=" +
+        encodeURIComponent(source);
+      const res = await fetch(url);
+      if (!res.ok) return raw;
+      const data = await res.json();
+      const translated = (data?.[0] || []).map((row) => row?.[0] || "").join("").trim();
+      if (!translated) return raw;
+      const safe = translated.toLowerCase() === "fancy" ? "Fantasy" : translated;
+      cache[key] = safe;
+      return raw.replace(source, safe);
+    } catch {
+      return raw;
     }
-
-    const request = (async () => {
-      try {
-        const url =
-          "https://translate.googleapis.com/translate_a/single?client=gtx&sl=es&tl=en&dt=t&q=" +
-          encodeURIComponent(source);
-        const res = await fetch(url);
-        if (!res.ok) return source;
-        const data = await res.json();
-        const translated = (data?.[0] || []).map((row) => row?.[0] || "").join("").trim();
-        if (!translated) return source;
-        const safe = translated.toLowerCase() === "fancy" ? "Fantasy" : translated;
-        cache[key] = safe;
-        return safe;
-      } catch {
-        return source;
-      } finally {
-        inflight.delete(key);
-      }
-    })();
-
-    inflight.set(key, request);
-    const translated = await request;
-    return raw.replace(source, translated || source);
   }
 
   async function applyEnglish() {
@@ -191,12 +180,11 @@
       if (!shouldSkip(trimmed)) unique.set(trimmed, true);
     });
 
-    const sourceTexts = [...unique.keys()];
-    const results = await Promise.all(sourceTexts.map((esText) => translateEsToEn(esText)));
     const translations = {};
-    sourceTexts.forEach((esText, index) => {
-      translations[esText] = results[index].trim() || esText;
-    });
+    for (const esText of unique.keys()) {
+      const translated = await translateEsToEn(esText);
+      translations[esText] = translated.trim() || esText;
+    }
     saveCache();
 
     textNodes.forEach((entry) => {
@@ -227,48 +215,45 @@
     });
   }
 
-  function paintFromKnownTranslations() {
-    textNodes.forEach((entry) => {
-      const trimmed = (entry.es || "").trim();
-      if (!trimmed) {
-        entry.node.textContent = entry.es;
-        return;
-      }
-      const key = normalize(trimmed).toLowerCase();
-      if (forcedMap.has(key)) {
-        entry.node.textContent = entry.es.replace(trimmed, forcedMap.get(key));
-      } else if (cache[key]) {
-        entry.node.textContent = entry.es.replace(trimmed, cache[key]);
-      } else {
-        entry.node.textContent = entry.es;
-      }
-    });
-
-    attrNodes.forEach((entry) => {
-      const trimmed = (entry.es || "").trim();
-      if (!trimmed) {
-        entry.el.setAttribute(entry.attr, entry.es);
-        return;
-      }
-      const key = normalize(trimmed).toLowerCase();
-      if (forcedMap.has(key)) {
-        entry.el.setAttribute(entry.attr, entry.es.replace(trimmed, forcedMap.get(key)));
-      } else if (cache[key]) {
-        entry.el.setAttribute(entry.attr, entry.es.replace(trimmed, cache[key]));
-      } else {
-        entry.el.setAttribute(entry.attr, entry.es);
-      }
-    });
-  }
-
-  async function applyLanguage(lang) {
+  function applyLanguage(lang) {
     const selected = LANGS[lang] ? lang : "es";
-    if (selected === "es") {
-      applySpanish();
-    }
+    if (selected === "es") applySpanish();
     if (selected === "en") {
-      paintFromKnownTranslations();
-      await applyEnglish();
+      textNodes.forEach((entry) => {
+        const trimmed = (entry.es || "").trim();
+        if (!trimmed) {
+          entry.node.textContent = entry.es;
+          return;
+        }
+        const key = normalize(trimmed).toLowerCase();
+        if (forcedMap.has(key)) {
+          entry.node.textContent = entry.es.replace(trimmed, forcedMap.get(key));
+        } else if (cache[key]) {
+          entry.node.textContent = entry.es.replace(trimmed, cache[key]);
+        } else {
+          entry.node.textContent = entry.es;
+        }
+      });
+      attrNodes.forEach((entry) => {
+        const trimmed = (entry.es || "").trim();
+        if (!trimmed) {
+          entry.el.setAttribute(entry.attr, entry.es);
+          return;
+        }
+        const key = normalize(trimmed).toLowerCase();
+        if (forcedMap.has(key)) {
+          entry.el.setAttribute(entry.attr, entry.es.replace(trimmed, forcedMap.get(key)));
+        } else if (cache[key]) {
+          entry.el.setAttribute(entry.attr, entry.es.replace(trimmed, cache[key]));
+        } else {
+          entry.el.setAttribute(entry.attr, entry.es);
+        }
+      });
+      setTimeout(() => {
+  const basePath = window.location.pathname.includes('/views/') ? '../' : '';
+
+        applyEnglish();
+      }, 0);
     }
     document.documentElement.lang = selected;
     localStorage.setItem(STORAGE_KEY, selected);
@@ -280,8 +265,8 @@
   let observerBound = false;
   let langUiBound = false;
 
-  const scheduleApply = (delay = 120) => {
-    if (pending) clearTimeout(pending);
+  const scheduleApply = () => {
+    if (pending) return;
     pending = setTimeout(async () => {
       pending = null;
       if (isApplying) return;
@@ -289,7 +274,7 @@
       collectNodes(document.body);
       await applyLanguage(currentLang);
       isApplying = false;
-    }, delay);
+    }, 120);
   };
 
   function init() {
@@ -308,17 +293,14 @@
       icon.alt = LANGS[lang].alt;
     };
 
-    scheduleApply(0);
+    applyLanguage(currentLang);
     setFlag(current);
 
     if (!observerBound) {
       observerBound = true;
-      const observer = new MutationObserver((mutations) => {
+      const observer = new MutationObserver(() => {
         if (isApplying) return;
-        if (currentLang !== "en") return;
-        const meaningful = mutations.some((mutation) => mutation.addedNodes.length || mutation.type === "characterData");
-        if (!meaningful) return;
-        scheduleApply(180);
+        scheduleApply();
       });
       observer.observe(document.body, {
         childList: true,
@@ -326,10 +308,9 @@
         characterData: true
       });
 
-      if (currentLang === "en") {
-        setTimeout(() => scheduleApply(80), 180);
-        setTimeout(() => scheduleApply(80), 650);
-      }
+      // Re-scan after initial render scripts populate dynamic menu/items.
+      setTimeout(scheduleApply, 250);
+      setTimeout(scheduleApply, 900);
     }
 
     if (!toggle || !menu || langUiBound) return;
@@ -346,7 +327,7 @@
       if (!item) return;
       const selected = LANGS[item.dataset.lang] ? item.dataset.lang : "es";
       currentLang = selected;
-      scheduleApply(0);
+      scheduleApply();
       setFlag(selected);
       menu.classList.add("hidden");
       toggle.setAttribute("aria-expanded", "false");
@@ -362,3 +343,4 @@
 
   window.AniDexI18n = { init };
 })();
+

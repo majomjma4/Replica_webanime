@@ -14,9 +14,15 @@
   const buildAppUrl = (path = "") => {
     const sharedBuilder = window.AniDexShared?.buildAppUrl;
     if (typeof sharedBuilder === "function") return sharedBuilder(path);
+    if (window.CI_BASE_URL) return window.CI_BASE_URL + path;
     const pathname = window.location.pathname.replace(/\\/g, "/");
     const publicIndex = pathname.toLowerCase().indexOf("/public/");
-    const basePath = publicIndex >= 0 ? pathname.slice(0, publicIndex + 8) : "/";
+    let basePath = "/";
+    if (publicIndex >= 0) {
+        basePath = pathname.slice(0, publicIndex + 8);
+    } else if (pathname.toLowerCase().indexOf("/replica") === 0) {
+        basePath = "/replica/";
+    }
     const cleanPath = String(path || "").replace(/^\/+/, "");
     return cleanPath ? `${basePath}${cleanPath}` : basePath.replace(/\/$/, "");
   };

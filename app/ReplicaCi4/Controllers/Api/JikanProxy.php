@@ -4,46 +4,41 @@ declare(strict_types=1);
 
 namespace ReplicaCi4\Controllers\Api;
 
-use ReplicaCi4\Models\Database;
-use PDO;
+use ReplicaCi4\Controllers\BaseController;
 
-final class JikanProxy
+final class JikanProxy extends BaseController
 {
     private array $restrictedGenres = ['Hentai', 'Erotica', 'Ecchi', 'Yaoi', 'Yuri', 'Gore', 'Harem', 'Reverse Harem', 'Rx', 'Girls Love', 'Boys Love'];
     private array $restrictedTitles = ['does it count if', 'futanari', 'e-p-h-o-r-i-a'];
 
-    public function handle(): void
+    public function handle()
     {
-        error_reporting(0);
-        ini_set('display_errors', '0');
-        header('Content-Type: application/json');
-        header('Access-Control-Allow-Origin: *');
-
-        $endpoint = (string) ($_GET['endpoint'] ?? '');
+        $endpoint = (string) $this->request->getGet('endpoint');
         if ($endpoint === '') {
-            http_response_code(400);
-            echo json_encode(['error' => 'Endpoint is required']);
-            return;
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'Endpoint is required']);
         }
 
-        $db = (new Database())->getConnection();
-        if (!$db) {
-            return;
+        $db = \Config\Database::connect();
+        if (!$db->tableExists('jikan_cache')) {
+            // Early bypass if table does not exist somehow
+            return $this->fetchFromApi($endpoint, null);
         }
 
         $cacheKey = md5($endpoint);
-        $stmt = $db->prepare('SELECT response, updated_at FROM jikan_cache WHERE cache_key = ? LIMIT 1');
-        $stmt->execute([$cacheKey]);
-        $cached = $stmt->fetch(PDO::FETCH_ASSOC);
+        $cached = $db->table('jikan_cache')->where('cache_key', $cacheKey)->get()->getRowArray();
 
         if ($cached) {
             $updatedAt = strtotime((string) $cached['updated_at']);
             if ((time() - $updatedAt) < (48 * 3600)) {
-                echo (string) $cached['response'];
-                return;
+                return $this->response->setHeader('Content-Type', 'application/json')->setBody((string) $cached['response']);
             }
         }
 
+        return $this->fetchFromApi($endpoint, $cached, $cacheKey, $db);
+    }
+
+    private function fetchFromApi(string $endpoint, ?array $cached = null, ?string $cacheKey = null, $db = null)
+    {
         $url = 'https://api.jikan.moe/v4/' . ltrim($endpoint, '/');
         if (preg_match('/(anime|manga|top|seasons|search)/i', $url) && !str_contains($url, 'sfw=')) {
             $url .= (str_contains($url, '?') ? '&' : '?') . 'sfw=1';
@@ -60,25 +55,39 @@ final class JikanProxy
 
         if ($httpCode === 200 && !empty($response)) {
             $filteredResponse = $this->filterResponse((string) $response);
-            $save = $db->prepare('REPLACE INTO jikan_cache (cache_key, endpoint, response) VALUES (?, ?, ?)');
-            $save->execute([$cacheKey, $endpoint, $filteredResponse]);
-            echo $filteredResponse;
-            return;
+            
+            if ($db && $cacheKey) {
+                // Implement REPLACE INTO or Update/Insert based on existence
+                $exists = $db->table('jikan_cache')->where('cache_key', $cacheKey)->countAllResults(false) > 0;
+                if ($exists) {
+                    $db->table('jikan_cache')->where('cache_key', $cacheKey)->update([
+                        'endpoint' => $endpoint,
+                        'response' => $filteredResponse,
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ]);
+                } else {
+                    $db->table('jikan_cache')->insert([
+                        'cache_key' => $cacheKey,
+                        'endpoint' => $endpoint,
+                        'response' => $filteredResponse,
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ]);
+                }
+            }
+            return $this->response->setHeader('Content-Type', 'application/json')->setBody($filteredResponse);
         }
 
         if ($httpCode === 429) {
-            http_response_code(429);
-            echo json_encode(['error' => 'Rate limited by Jikan']);
-            return;
+            return $this->response->setStatusCode(429)->setJSON(['error' => 'Rate limited by Jikan']);
         }
 
         if ($cached) {
-            echo $this->filterResponse((string) $cached['response']);
-            return;
+            return $this->response->setHeader('Content-Type', 'application/json')->setBody($this->filterResponse((string) $cached['response']));
         }
 
-        http_response_code($httpCode ?: 500);
-        echo $response ?: json_encode(['error' => 'Jikan API failed and no cache available']);
+        $statusCode = $httpCode ?: 500;
+        $body = $response ?: json_encode(['error' => 'Jikan API failed and no cache available']);
+        return $this->response->setStatusCode($statusCode)->setHeader('Content-Type', 'application/json')->setBody($body);
     }
 
     private function filterResponse(string $json): string

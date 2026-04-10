@@ -299,7 +299,7 @@
       <section>
   <div id="featured-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
 </section>
-<script src="assets/js/load-more.js?v=3"></script>
+<script src="assets/js/load-more.js?v=5"></script>
 <script>
 (function () {
   const select = document.getElementById("featured-type");
@@ -430,7 +430,7 @@
     </main>
     <!-- Footer Component -->
     <div data-layout="footer"></div>
-    <script src="assets/js/layout.js?v=theme1"></script>
+    <script src="assets/js/layout.js?v=theme3"></script>
     <script src="assets/js/shared-utils.js?v=1"></script>
     <script src="assets/js/i18n.js"></script>
     <script src="assets/js/search.js?v=popular4"></script>

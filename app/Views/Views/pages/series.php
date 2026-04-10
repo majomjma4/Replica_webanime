@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html class="dark" lang="es">
   <head>
     <script data-ui-preload>document.documentElement.classList.add("preload-ui");</script>
@@ -501,8 +501,8 @@
 
       <!-- Footer Component -->
       <div data-layout="footer"></div>
-      <script src="<?= asset_path('assets/js/layout.js?v=theme1') ?>"></script>
-    <script src="<?= asset_path('assets/js/shared-utils.js?v=3') ?>"></script>
+      <script src="<?= asset_path('assets/js/layout.js?v=theme3') ?>"></script>
+    <script src="<?= asset_path('assets/js/shared-utils.js?v=5') ?>"></script>
     </div>
     <script src="<?= asset_path('assets/js/i18n.js') ?>"></script>
     <script src="<?= asset_path('assets/js/title-images.js?v=1774473995,33386') ?>"></script>

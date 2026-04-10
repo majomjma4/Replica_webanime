@@ -19,6 +19,7 @@ final class Pages extends BaseController
 
     public function show(string $slug): void
     {
+        app_publish_csrf_cookie();
         $pages = $this->pageMap();
         $page = $pages[$slug] ?? null;
 
@@ -42,17 +43,17 @@ final class Pages extends BaseController
         }
 
         if ($slug === 'detail') {
-            app_start_session();
-            $detailRef = trim((string) ($_GET['_detail_ref'] ?? ''));
-            $legacyId = trim((string) ($_GET['mal_id'] ?? $_GET['id'] ?? ''));
-            $legacyTitle = trim((string) ($_GET['q'] ?? ''));
+            $session = session();
+            $detailRef = trim((string) ($this->request->getGet('_detail_ref') ?? ''));
+            $legacyId = trim((string) ($this->request->getGet('mal_id') ?? $this->request->getGet('id') ?? ''));
+            $legacyTitle = trim((string) ($this->request->getGet('q') ?? ''));
             if ($detailRef === '') {
                 $detailRef = app_detail_ref_from_input($legacyId, $legacyTitle);
             }
             $detailQuery = $detailRef !== '' && !ctype_digit($detailRef) ? str_replace('-', ' ', $detailRef) : '';
-            $isLoggedIn = isset($_SESSION['user_id']);
-            $sessionRole = (string) ($_SESSION['role'] ?? 'Invitado');
-            $sessionPremium = !empty($_SESSION['premium']) || $sessionRole === 'Admin';
+            $isLoggedIn = $session->has('user_id');
+            $sessionRole = (string) ($session->get('role') ?? 'Invitado');
+            $sessionPremium = !empty($session->get('premium')) || $sessionRole === 'Admin';
 
             $this->render('pages/detail', [
                 'slug' => $slug,
@@ -62,6 +63,66 @@ final class Pages extends BaseController
                 'isLoggedIn' => $isLoggedIn,
                 'sessionRole' => $sessionRole,
                 'sessionPremium' => $sessionPremium,
+            ]);
+            return;
+        }
+
+        if ($slug === 'gestion') {
+            $session = session();
+            
+            $animeModel = new Anime();
+            $pageNum = max(1, (int) ($this->request->getGet('page') ?? 1));
+            $perPage = 50;
+            $searchQuery = trim((string) ($this->request->getGet('q') ?? ''));
+            $statusFilter = trim((string) ($this->request->getGet('status') ?? 'ALL'));
+            $typeFilter = trim((string) ($this->request->getGet('type') ?? 'ALL'));
+            $yearFilter = trim((string) ($this->request->getGet('year') ?? ''));
+
+            $catalog = $animeModel->getCatalog($pageNum, $perPage, $searchQuery, $statusFilter, $typeFilter, $yearFilter);
+
+            $animes = $catalog['data'];
+            $totalAnimes = $catalog['total'];
+            $totalPages = $catalog['totalPages'];
+            $pageData = $catalog['currentPage'];
+            $airingCount = $catalog['airingCount'];
+
+            $offset = ($pageData - 1) * $perPage;
+            $rangeStart = $totalAnimes > 0 ? $offset + 1 : 0;
+            $rangeEnd = $totalAnimes > 0 ? min($offset + count($animes), $totalAnimes) : 0;
+            $pageStart = max(1, $pageData - 2);
+            $pageEnd = min($totalPages, $pageData + 2);
+
+            $queryParams = [
+                'q' => $searchQuery,
+                'status' => $statusFilter,
+                'type' => $typeFilter,
+                'year' => $yearFilter,
+            ];
+            
+            $buildPageUrl = static function (int $targetPage) use ($queryParams): string {
+                $params = array_filter(array_merge($queryParams, ['page' => $targetPage]), static fn ($value) => $value !== '' && $value !== 'ALL' && $value !== null);
+                return '?' . http_build_query($params);
+            };
+
+            $this->render('pages/gestion', [
+                'slug' => $slug,
+                'pageInfo' => $page,
+                'page' => $pageData,
+                'pageData' => $pageData,
+                'perPage' => $perPage,
+                'searchQuery' => $searchQuery,
+                'statusFilter' => $statusFilter,
+                'typeFilter' => $typeFilter,
+                'yearFilter' => $yearFilter,
+                'totalAnimes' => $totalAnimes,
+                'totalPages' => $totalPages,
+                'animes' => $animes,
+                'airingCount' => $airingCount,
+                'rangeStart' => $rangeStart,
+                'rangeEnd' => $rangeEnd,
+                'pageStart' => $pageStart,
+                'pageEnd' => $pageEnd,
+                'buildPageUrl' => $buildPageUrl,
             ]);
             return;
         }
@@ -160,6 +221,34 @@ final class Pages extends BaseController
                 'eyebrow' => 'Ficha',
                 'heading' => 'Detalle del anime',
                 'description' => 'Vista de detalle conectada solo a la replica.',
+                'cards' => [],
+            ],
+            'anadir' => [
+                'title' => 'NekoraList - Añadir Anime',
+                'eyebrow' => 'Administracion',
+                'heading' => 'Añadir Anime',
+                'description' => 'Añade animes manualmente o usando Jikan proxy.',
+                'cards' => [],
+            ],
+            'gestion' => [
+                'title' => 'NekoraList - Gestionar Catalogo',
+                'eyebrow' => 'Administracion',
+                'heading' => 'Gestion de Catalogo',
+                'description' => 'Vista de todos los animes importados en CI4.',
+                'cards' => [],
+            ],
+            'gesus' => [
+                'title' => 'NekoraList - Gestionar Usuarios',
+                'eyebrow' => 'Administracion',
+                'heading' => 'Gestion de Usuarios',
+                'description' => 'Administracion de cuentas CI4.',
+                'cards' => [],
+            ],
+            'gescom' => [
+                'title' => 'NekoraList - Gestionar Comentarios',
+                'eyebrow' => 'Administracion',
+                'heading' => 'Gestion de Comentarios',
+                'description' => 'Moderacion de reportes y comentarios.',
                 'cards' => [],
             ],
         ];

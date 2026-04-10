@@ -26,7 +26,7 @@ class Database extends Config
      */
     public array $default = [
         'DSN'          => '',
-        'hostname'     => 'localhost',
+        'hostname'     => '',
         'username'     => '',
         'password'     => '',
         'database'     => '',
@@ -50,6 +50,8 @@ class Database extends Config
             'time'     => 'H:i:s',
         ],
     ];
+
+
 
     //    /**
     //     * Sample database connection for SQLite3.
@@ -193,10 +195,12 @@ class Database extends Config
     public function __construct()
     {
         parent::__construct();
+        $this->default['hostname'] = env('DB_HOST', '127.0.0.1');
+        $this->default['username'] = env('DB_USER', 'root');
+        $this->default['password'] = env('DB_PASS', '');
+        $this->default['database'] = env('DB_NAME', 'webanime_ci4_replica');
+        $this->default['port']     = (int) env('DB_PORT', '3306');
 
-        // Ensure that we always set the database group to 'tests' if
-        // we are currently running an automated test suite, so that
-        // we don't overwrite live data on accident.
         if (ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
         }

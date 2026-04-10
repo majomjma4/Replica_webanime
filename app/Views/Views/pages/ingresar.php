@@ -196,7 +196,7 @@
       })();
     </script>
 
-    <script src="assets/js/layout.js?v=theme1"></script>
+    <script src="assets/js/layout.js?v=theme3"></script>
     <script src="assets/js/shared-utils.js?v=1"></script>
     <div id="login-success" class="fixed inset-0 z-[80] hidden">
       <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>

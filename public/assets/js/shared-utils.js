@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const getCookie = (name) => {
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
@@ -14,60 +14,17 @@
     }
   };
 
-  const normalizeBasePath = (value) => {
-    const normalized = String(value || "").replace(/\\/g, "/");
-    if (!normalized || normalized === "/") return "/";
-    return normalized.endsWith("/") ? normalized : `${normalized}/`;
-  };
-
-  const inferBasePathFromScript = () => {
-    const scripts = Array.from(document.querySelectorAll("script[src]"));
-    for (const script of scripts) {
-      const src = script.getAttribute("src") || "";
-      const match = src.match(/^(.*\/)assets\/js\/[^/]+$/i);
-      if (match?.[1]) {
-        return normalizeBasePath(match[1]);
-      }
-    }
-    return "";
-  };
-
-  const getBasePath = () => {
-    const metaBase = document.querySelector('meta[name="app-base-path"]')?.getAttribute("content") || "";
-    if (metaBase) {
-      return normalizeBasePath(metaBase);
-    }
-
-    const scriptBase = inferBasePathFromScript();
-    if (scriptBase) {
-      return scriptBase;
-    }
-
+    const getBasePath = () => {
+    if (window.CI_BASE_URL) return window.CI_BASE_URL;
     const path = window.location.pathname.replace(/\\/g, "/");
     const publicIndex = path.toLowerCase().indexOf("/public/");
     if (publicIndex >= 0) {
-      return normalizeBasePath(path.slice(0, publicIndex + "/public/".length));
+      return path.slice(0, publicIndex + "/public/".length);
     }
-    if (path.toLowerCase().endsWith("/public")) {
-      return normalizeBasePath(path);
+    if (path.toLowerCase().indexOf("/replica") === 0) {
+      return "/replica/";
     }
-
-    const routeMatch = path.match(/^(.*\/)(index|destacados|ranking|series|peliculas|registro|ingresar|pago|admin|user|detail)(?:\/[^/?#]+)?\/?$/i);
-    if (routeMatch?.[1]) {
-      return normalizeBasePath(routeMatch[1]);
-    }
-
-    const apiMatch = path.match(/^(.*\/)api\/[^/?#]+\/?$/i);
-    if (apiMatch?.[1]) {
-      return normalizeBasePath(apiMatch[1]);
-    }
-
-    const partialsMatch = path.match(/^(.*\/)partials\/[^/?#]+\/?$/i);
-    if (partialsMatch?.[1]) {
-      return normalizeBasePath(partialsMatch[1]);
-    }
-
-    return normalizeBasePath(path);
+    return "/";
   };
 
   const buildAppUrl = (path = "") => {
@@ -226,5 +183,4 @@
     fetchJson
   };
 })();
-
 

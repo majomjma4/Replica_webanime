@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="assets/js/layout.js?v=theme1"></script>
+<script src="assets/js/layout.js?v=theme3"></script>
     <script src="assets/js/shared-utils.js?v=1"></script>
 <script id="tailwind-config">
       tailwind.config = {

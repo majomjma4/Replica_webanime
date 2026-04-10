@@ -4,28 +4,25 @@ declare(strict_types=1);
 
 namespace ReplicaCi4\Models;
 
-use PDO;
-use Exception;
+use CodeIgniter\Model;
 
-final class Anime
+final class Anime extends Model
 {
-    private ?PDO $db;
-
-    public function __construct()
-    {
-        $this->db = (new Database())->getConnection(false);
-    }
+    protected $table = 'anime';
+    protected $primaryKey = 'id';
+    protected $returnType = 'array';
+    protected $useAutoIncrement = true;
+    protected $allowedFields = [
+        'mal_id', 'titulo', 'titulo_ingles', 'tipo', 'estado', 
+        'episodios', 'anio', 'clasificacion', 'sinopsis', 
+        'imagen_url', 'trailer_url', 'puntuacion', 'activo'
+    ];
 
     public function getById(int $id): ?array
     {
-        if (!$this->db) {
-            return null;
-        }
-
-        $stmt = $this->db->prepare("SELECT * FROM anime WHERE mal_id = :id OR id = :id LIMIT 1");
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-        $anime = $stmt->fetch(PDO::FETCH_ASSOC);
+        $anime = $this->where('mal_id', $id)
+                      ->orWhere('id', $id)
+                      ->first();
 
         if ($anime) {
             $anime['generos'] = $this->getGeneros((int) $anime['id']);
@@ -37,25 +34,19 @@ final class Anime
 
     public function getByTitle(string $title): ?array
     {
-        if (!$this->db) {
-            return null;
-        }
-
         $cleanTitle = trim($title);
         if ($cleanTitle === '') {
             return null;
         }
 
-        $stmt = $this->db->prepare("SELECT * FROM anime WHERE titulo = :title OR titulo_ingles = :title LIMIT 1");
-        $stmt->bindValue(':title', $cleanTitle, PDO::PARAM_STR);
-        $stmt->execute();
-        $anime = $stmt->fetch(PDO::FETCH_ASSOC);
+        $anime = $this->where('titulo', $cleanTitle)
+                      ->orWhere('titulo_ingles', $cleanTitle)
+                      ->first();
 
         if (!$anime) {
-            $stmt = $this->db->prepare("SELECT * FROM anime WHERE titulo LIKE :title OR titulo_ingles LIKE :title LIMIT 1");
-            $stmt->bindValue(':title', '%' . $cleanTitle . '%', PDO::PARAM_STR);
-            $stmt->execute();
-            $anime = $stmt->fetch(PDO::FETCH_ASSOC);
+            $anime = $this->like('titulo', $cleanTitle)
+                          ->orLike('titulo_ingles', $cleanTitle)
+                          ->first();
         }
 
         if ($anime) {
@@ -68,34 +59,23 @@ final class Anime
 
     public function getGeneros(int $animeId): array
     {
-        if (!$this->db) {
-            return [];
-        }
-
-        $stmt = $this->db->prepare(
-            "SELECT g.nombre
-             FROM generos g
-             INNER JOIN anime_generos ag ON g.id = ag.genero_id
-             WHERE ag.anime_id = :anime_id"
-        );
-        $stmt->bindValue(':anime_id', $animeId, PDO::PARAM_INT);
-        $stmt->execute();
-
-        return $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        $results = $this->db->table('generos g')
+            ->select('g.nombre')
+            ->join('anime_generos ag', 'g.id = ag.genero_id')
+            ->where('ag.anime_id', $animeId)
+            ->get()->getResultArray();
+        return array_column($results, 'nombre');
     }
 
     public function getFilteredGenres(): array
     {
-        if (!$this->db) {
-            return [];
-        }
-
-        $restricted = ["'Hentai'", "'Erotica'", "'Ecchi'", "'Yaoi'", "'Yuri'", "'Gore'", "'Harem'", "'Reverse Harem'", "'Rx'", "'Girls Love'", "'Boys Love'"];
-        $sql = "SELECT nombre FROM generos WHERE nombre NOT IN (" . implode(',', $restricted) . ") ORDER BY nombre ASC";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute();
-
-        return $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        $restricted = ['Hentai', 'Erotica', 'Ecchi', 'Yaoi', 'Yuri', 'Gore', 'Harem', 'Reverse Harem', 'Rx', 'Girls Love', 'Boys Love'];
+        $results = $this->db->table('generos')
+            ->select('nombre')
+            ->whereNotIn('nombre', $restricted)
+            ->orderBy('nombre', 'ASC')
+            ->get()->getResultArray();
+        return array_column($results, 'nombre');
     }
 
     public function getMovies(): array
@@ -110,53 +90,57 @@ final class Anime
 
     private function getCatalogByType(bool $movies): array
     {
-        if (!$this->db) {
-            return [];
+        $restrictedGenres = ['Hentai', 'Erotica', 'Ecchi', 'Yaoi', 'Yuri', 'Girls Love', 'Boys Love'];
+        $restrictedTitles = ['%does it count if%', '%futanari%'];
+
+        $builder = $this->builder();
+        if ($movies) {
+            $builder->where('tipo', 'Movie');
+        } else {
+            $builder->where('tipo !=', 'Movie');
         }
 
-        $restrictedGenres = ["'Hentai'", "'Erotica'", "'Ecchi'", "'Yaoi'", "'Yuri'", "'Girls Love'", "'Boys Love'"];
-        $restrictedTitles = ["'%does it count if%'", "'%futanari%'"];
+        $builder->where('activo', 1);
 
-        $typeWhere = $movies ? "tipo = 'Movie'" : "tipo != 'Movie'";
-        $sql = "SELECT * FROM anime
-                WHERE {$typeWhere}
-                  AND activo = 1
-                  AND id NOT IN (
-                    SELECT anime_id FROM anime_generos
-                    WHERE genero_id IN (SELECT id FROM generos WHERE nombre IN (" . implode(',', $restrictedGenres) . "))
-                  )
-                  AND LOWER(titulo) NOT LIKE " . implode(" AND LOWER(titulo) NOT LIKE ", $restrictedTitles);
+        $subquery = $this->db->table('anime_generos')
+            ->select('anime_id')
+            ->whereIn('genero_id', function ($db) use ($restrictedGenres) {
+                return $db->select('id')->from('generos')->whereIn('nombre', $restrictedGenres);
+            });
+
+        $builder->whereNotIn('id', $subquery);
+
+        foreach ($restrictedTitles as $rt) {
+            $builder->notLike('LOWER(titulo)', strtolower(trim($rt, '%')));
+        }
 
         if ($movies) {
-            $sql .= " ORDER BY puntuacion DESC, id DESC";
+            $builder->orderBy('puntuacion', 'DESC')->orderBy('id', 'DESC');
         } else {
-            $sql .= " ORDER BY
-                        CASE
-                          WHEN titulo LIKE 'Shingeki no Kyojin%' THEN 0
-                          WHEN titulo = 'Fullmetal Alchemist: Brotherhood' THEN 1
-                          WHEN titulo = 'Steins;Gate' THEN 2
-                          WHEN titulo LIKE 'Hunter x Hunter%' THEN 3
-                          WHEN titulo LIKE 'Kimetsu no Yaiba%' THEN 4
-                          WHEN titulo LIKE 'Jujutsu Kaisen%' THEN 5
-                          WHEN titulo LIKE 'Chainsaw Man%' THEN 6
-                          WHEN titulo LIKE 'Spy x Family%' THEN 7
-                          WHEN titulo LIKE 'Haikyuu!!%' THEN 8
-                          WHEN titulo LIKE 'Boku no Hero Academia%' THEN 9
-                          WHEN titulo LIKE 'One Piece%' THEN 10
-                          WHEN titulo LIKE 'Naruto%' THEN 11
-                          WHEN titulo LIKE 'Bleach%' THEN 12
-                          WHEN titulo LIKE 'Sousou no Frieren%' THEN 13
-                          WHEN titulo = 'Gintama' THEN 80
-                          WHEN titulo LIKE 'Gintama%' THEN 90
-                          ELSE 40
-                        END ASC,
-                        puntuacion DESC,
-                        id DESC";
+            $customOrder = "CASE
+                WHEN titulo LIKE 'Shingeki no Kyojin%' THEN 0
+                WHEN titulo = 'Fullmetal Alchemist: Brotherhood' THEN 1
+                WHEN titulo = 'Steins;Gate' THEN 2
+                WHEN titulo LIKE 'Hunter x Hunter%' THEN 3
+                WHEN titulo LIKE 'Kimetsu no Yaiba%' THEN 4
+                WHEN titulo LIKE 'Jujutsu Kaisen%' THEN 5
+                WHEN titulo LIKE 'Chainsaw Man%' THEN 6
+                WHEN titulo LIKE 'Spy x Family%' THEN 7
+                WHEN titulo LIKE 'Haikyuu!!%' THEN 8
+                WHEN titulo LIKE 'Boku no Hero Academia%' THEN 9
+                WHEN titulo LIKE 'One Piece%' THEN 10
+                WHEN titulo LIKE 'Naruto%' THEN 11
+                WHEN titulo LIKE 'Bleach%' THEN 12
+                WHEN titulo LIKE 'Sousou no Frieren%' THEN 13
+                WHEN titulo = 'Gintama' THEN 80
+                WHEN titulo LIKE 'Gintama%' THEN 90
+                ELSE 40 END";
+            $builder->orderBy($customOrder, 'ASC', false);
+            $builder->orderBy('puntuacion', 'DESC');
+            $builder->orderBy('id', 'DESC');
         }
 
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute();
-        $animes = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $animes = $builder->get()->getResultArray();
 
         foreach ($animes as &$anime) {
             $anime['generos_str'] = implode(',', array_map('strtolower', $this->getGeneros((int) $anime['id'])));
@@ -173,6 +157,7 @@ final class Anime
         }
 
         $url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=es&dt=t&q=' . urlencode($text);
+        
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -241,18 +226,13 @@ final class Anime
 
     private function saveJikanDataToDB(array $anime): ?array
     {
-        if (!$this->db) {
-            return null;
-        }
-
         $malId = (int) ($anime['mal_id'] ?? 0);
         if ($malId <= 0) {
             return null;
         }
 
-        $check = $this->db->prepare('SELECT id FROM anime WHERE mal_id = ?');
-        $check->execute([$malId]);
-        if ($check->fetchColumn()) {
+        $exists = $this->where('mal_id', $malId)->first();
+        if ($exists) {
             return $this->getById($malId);
         }
 
@@ -269,30 +249,125 @@ final class Anime
         $score = isset($anime['score']) ? (float) $anime['score'] : null;
 
         try {
-            $insert = $this->db->prepare('INSERT INTO anime (mal_id, titulo, titulo_ingles, tipo, estado, episodios, anio, clasificacion, sinopsis, imagen_url, trailer_url, puntuacion, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)');
-            $insert->execute([$malId, $titulo, $tituloIngles, $tipo, $estado, $episodes, $anio ?: null, $rating, $sinopsis, $img, $trailerUrl, $score]);
-            $internalId = (int) $this->db->lastInsertId();
+            $internalId = $this->insert([
+                'mal_id' => $malId,
+                'titulo' => $titulo,
+                'titulo_ingles' => $tituloIngles,
+                'tipo' => $tipo,
+                'estado' => $estado,
+                'episodios' => $episodes,
+                'anio' => $anio ?: null,
+                'clasificacion' => $rating,
+                'sinopsis' => $sinopsis,
+                'imagen_url' => $img,
+                'trailer_url' => $trailerUrl,
+                'puntuacion' => $score,
+                'activo' => 1
+            ]);
 
             if (!empty($anime['genres']) && is_array($anime['genres'])) {
                 foreach ($anime['genres'] as $genre) {
                     $genreName = substr((string) ($genre['name'] ?? ''), 0, 50);
-                    if ($genreName === '') {
-                        continue;
+                    if ($genreName === '') continue;
+                    
+                    $genreRow = $this->db->table('generos')->where('nombre', $genreName)->get()->getRowArray();
+                    if (!$genreRow) {
+                        $this->db->table('generos')->insert(['nombre' => $genreName]);
+                        $genreId = $this->db->insertID();
+                    } else {
+                        $genreId = $genreRow['id'];
                     }
-                    $stmt = $this->db->prepare('SELECT id FROM generos WHERE nombre = ?');
-                    $stmt->execute([$genreName]);
-                    $genreId = $stmt->fetchColumn();
-                    if (!$genreId) {
-                        $this->db->prepare('INSERT INTO generos (nombre) VALUES (?)')->execute([$genreName]);
-                        $genreId = $this->db->lastInsertId();
-                    }
-                    $this->db->prepare('INSERT INTO anime_generos (anime_id, genero_id) VALUES (?, ?)')->execute([$internalId, $genreId]);
+                    $this->db->table('anime_generos')->insert([
+                        'anime_id' => $internalId,
+                        'genero_id' => $genreId
+                    ]);
                 }
             }
 
             return $this->getById($malId);
-        } catch (Exception) {
+        } catch (\Exception $e) {
             return null;
         }
+    }
+
+    public function getCatalog(int $page = 1, int $perPage = 50, string $search = '', string $status = 'ALL', string $type = 'ALL', string $year = ''): array
+    {
+        $restrictedGenres = ['Hentai', 'Erotica', 'Ecchi', 'Yaoi', 'Yuri', 'Girls Love', 'Boys Love'];
+        $restrictedTitles = ['%does it count if%', '%futanari%'];
+        
+        $builder = $this->builder();
+
+        $subquery = $this->db->table('anime_generos')
+            ->select('anime_id')
+            ->whereIn('genero_id', function ($db) use ($restrictedGenres) {
+                return $db->from('generos')->select('id')->whereIn('nombre', $restrictedGenres);
+            });
+
+        $builder->whereNotIn('id', $subquery);
+
+        foreach ($restrictedTitles as $rt) {
+            $builder->notLike('LOWER(titulo)', strtolower(trim($rt, '%')));
+        }
+
+        if (!empty($search)) {
+            $builder->groupStart()
+                ->like('titulo', $search)
+                ->orLike('tipo', $search)
+                ->orLike('estado', $search)
+                ->orLike('estudio', $search)
+                ->orWhere("CAST(anio AS CHAR) LIKE '%" . $this->db->escapeLikeString($search) . "%'")
+                ->groupEnd();
+        }
+
+        if ($status !== 'ALL' && !empty($status)) {
+            $statusMap = [
+                'EN EMISION' => ['en emision', 'en emisi?n', 'currently airing'],
+                'FINALIZADO' => ['finished airing', 'finalizado', 'finalizada'],
+                'PROXIMAMENTE' => ['not yet aired', 'proximamente', 'pr?ximamente'],
+            ];
+            $normalizedStatus = strtoupper($status);
+            if (isset($statusMap[$normalizedStatus])) {
+                $builder->groupStart();
+                foreach ($statusMap[$normalizedStatus] as $statusValue) {
+                    $builder->orWhere('LOWER(estado)', $statusValue);
+                }
+                $builder->groupEnd();
+            }
+        }
+
+        if ($type !== 'ALL' && !empty($type)) {
+            $builder->where('UPPER(tipo)', strtoupper($type));
+        }
+
+        if (!empty($year)) {
+            $builder->where("CAST(anio AS CHAR) LIKE '%" . $this->db->escapeLikeString($year) . "%'");
+        }
+
+        $total = $builder->countAllResults(false);
+        $totalPages = max(1, (int)ceil($total / max(1, $perPage)));
+        $page = min(max(1, $page), $totalPages);
+        $offset = ($page - 1) * $perPage;
+
+        $builder->orderBy('id', 'DESC')->limit($perPage, $offset);
+        $animes = $builder->get()->getResultArray();
+
+        $airingSubquery = $this->db->table('anime_generos')
+            ->select('anime_id')
+            ->whereIn('genero_id', function ($db) use ($restrictedGenres) {
+                return $db->from('generos')->select('id')->whereIn('nombre', $restrictedGenres);
+            });
+            
+        $airingCount = $this->db->table('anime')
+            ->whereIn('LOWER(estado)', ['en emision', 'currently airing'])
+            ->whereNotIn('id', $airingSubquery)
+            ->countAllResults();
+
+        return [
+            'data' => $animes,
+            'total' => $total,
+            'totalPages' => $totalPages,
+            'currentPage' => $page,
+            'airingCount' => $airingCount
+        ];
     }
 }

@@ -31,6 +31,12 @@ $routes->match(['get','post','options'], 'api/comments', '\\ReplicaCi4\\Controll
 $routes->match(['get','post','options'], 'api/comments.php', '\\ReplicaCi4\\Controllers\\Api\\Comments::handle');
 $routes->match(['get','post','options'], 'api/save_anime', '\\ReplicaCi4\\Controllers\\Api\\SaveAnime::handle');
 $routes->match(['get','post','options'], 'api/save_anime.php', '\\ReplicaCi4\\Controllers\\Api\\SaveAnime::handle');
+$routes->match(['get','post','options'], 'api/admin', '\\ReplicaCi4\\Controllers\\Api\\Admin::handle');
+$routes->match(['get','post','options'], 'api/admin.php', '\\ReplicaCi4\\Controllers\\Api\\Admin::handle');
+$routes->match(['get','post','options'], 'api/requests', '\\ReplicaCi4\\Controllers\\Api\\Requests::handle');
+$routes->match(['get','post','options'], 'api/requests.php', '\\ReplicaCi4\\Controllers\\Api\\Requests::handle');
+$routes->match(['get','post','options'], 'api/users', '\\ReplicaCi4\\Controllers\\Api\\Users::handle');
+$routes->match(['get','post','options'], 'api/users.php', '\\ReplicaCi4\\Controllers\\Api\\Users::handle');
 
 // Pages
 $routes->get('detail', '\\ReplicaCi4\\Controllers\\Pages::detail');

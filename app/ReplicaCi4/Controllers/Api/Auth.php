@@ -4,155 +4,160 @@ declare(strict_types=1);
 
 namespace ReplicaCi4\Controllers\Api;
 
-use ReplicaCi4\Models\Database;
-use PDO;
+use ReplicaCi4\Controllers\BaseController;
 use Throwable;
 
-final class Auth
+final class Auth extends BaseController
 {
-    public function handle(): void
+    public function handle()
     {
-        header('Content-Type: application/json; charset=UTF-8');
-        app_start_session();
-
-        $action = (string) ($_GET['action'] ?? 'check');
-        $data = app_get_json_input();
-
+        $action = (string) $this->request->getGet('action') ?: 'check';
+        
         if ($action === 'check') {
-            app_require_method('GET');
+            if ($this->request->getMethod(true) !== 'GET') {
+                return $this->response->setStatusCode(405)->setJSON(['success' => false, 'error' => 'Metodo no permitido']);
+            }
         } else {
-            app_require_method('POST');
+            if ($this->request->getMethod(true) !== 'POST') {
+                return $this->response->setStatusCode(405)->setJSON(['success' => false, 'error' => 'Metodo no permitido']);
+            }
+            // CodeIgniter CSRF is automated if enabled in Filters, but we'll enforce our manual session one just in case
             app_verify_csrf();
         }
 
-        $dbConn = (new Database())->getConnection();
-        if (!$dbConn) {
-            return;
-        }
+        $db = \Config\Database::connect();
+        $data = $this->request->getJSON(true) ?? [];
+        $session = session();
 
         if ($action === 'check') {
-            if (isset($_SESSION['user_id'])) {
-                $stmt = $dbConn->prepare('SELECT codigo_publico, es_premium, premium_vence_en FROM usuarios WHERE id = ?');
-                $stmt->execute([$_SESSION['user_id']]);
-                $user = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
-                $role = (string) ($_SESSION['role'] ?? 'Registrado');
+            if ($session->has('user_id')) {
+                $user = $db->table('usuarios')->select('codigo_publico, es_premium, premium_vence_en')->where('id', $session->get('user_id'))->get()->getRowArray() ?: [];
+                $role = (string) ($session->get('role') ?? 'Registrado');
                 $isPremium = $role === 'Admin' || ((int) ($user['es_premium'] ?? 0) === 1 && (empty($user['premium_vence_en']) || strtotime((string) $user['premium_vence_en']) > time()));
-                $_SESSION['premium'] = $isPremium;
+                
+                $session->set('premium', $isPremium);
 
-                echo json_encode([
+                return $this->response->setJSON([
                     'logged' => true,
-                    'username' => (string) ($_SESSION['username'] ?? 'Usuario'),
-                    'userId' => (string) ($_SESSION['user_id'] ?? ''),
+                    'username' => (string) ($session->get('username') ?? 'Usuario'),
+                    'userId' => (string) ($session->get('user_id') ?? ''),
                     'publicUserId' => $user['codigo_publico'] ?? null,
                     'role' => $role,
                     'isAdmin' => $role === 'Admin',
                     'isPremium' => $isPremium,
                 ]);
-                return;
             }
-
-            echo json_encode(['logged' => false, 'role' => 'Invitado', 'isPremium' => false]);
-            return;
+            return $this->response->setJSON(['logged' => false, 'role' => 'Invitado', 'isPremium' => false]);
         }
 
         if ($action === 'logout') {
-            if (isset($_SESSION['session_log_id'])) {
+            if ($session->has('session_log_id')) {
                 try {
-                    $dbConn->prepare('UPDATE usuarios_sesiones SET fin = NOW(), duracion = TIMESTAMPDIFF(SECOND, inicio, NOW()) WHERE id = ?')->execute([$_SESSION['session_log_id']]);
+                    $db->query('UPDATE usuarios_sesiones SET fin = NOW(), duracion = TIMESTAMPDIFF(SECOND, inicio, NOW()) WHERE id = ?', [$session->get('session_log_id')]);
                 } catch (Throwable) {
                 }
             }
-            session_unset();
-            session_destroy();
+            $session->destroy();
             setcookie(session_name(), '', time() - 3600, '/');
-            setcookie('XSRF-TOKEN', '', time() - 3600, '/');
-            echo json_encode(['success' => true]);
-            return;
+            return $this->response->setJSON(['success' => true]);
         }
 
         if ($action === 'register') {
             $username = trim((string) ($data['username'] ?? ''));
             $email = trim((string) ($data['email'] ?? ''));
             $password = (string) ($data['password'] ?? '');
+
             if ($username === '' || $email === '' || $password === '') {
-                echo json_encode(['success' => false, 'error' => 'Faltan campos obligatorios']);
-                return;
+                return $this->response->setJSON(['success' => false, 'error' => 'Faltan campos obligatorios']);
             }
 
-            $stmt = $dbConn->prepare('SELECT id FROM usuarios WHERE correo = ? OR nombre_mostrar = ?');
-            $stmt->execute([$email, $username]);
-            if ($stmt->fetch()) {
-                echo json_encode(['success' => false, 'error' => 'El usuario o correo ya esta registrado']);
-                return;
+            $exists = $db->table('usuarios')->where('correo', $email)->orWhere('nombre_mostrar', $username)->get()->getRow();
+            if ($exists) {
+                return $this->response->setJSON(['success' => false, 'error' => 'El usuario o correo ya esta registrado']);
             }
 
-            $publicCode = $this->generatePublicUserCode($dbConn);
+            $publicCode = $this->generatePublicUserCode($db);
             $hash = password_hash($password, PASSWORD_DEFAULT);
 
             try {
-                $dbConn->beginTransaction();
-                $stmt = $dbConn->prepare('INSERT INTO usuarios (codigo_publico, correo, hash_password, nombre_mostrar, rol_id, activo, creado_en) VALUES (?, ?, ?, ?, 2, 1, NOW())');
-                $stmt->execute([$publicCode, $email, $hash, $username]);
-                $userId = (int) $dbConn->lastInsertId();
-                $dbConn->prepare('INSERT INTO usuarios_sesiones (usuario_id, inicio) VALUES (?, NOW())')->execute([$userId]);
-                $sessionLogId = (int) $dbConn->lastInsertId();
-                $dbConn->commit();
+                $db->transStart();
+                $db->table('usuarios')->insert([
+                    'codigo_publico' => $publicCode,
+                    'correo' => $email,
+                    'hash_password' => $hash,
+                    'nombre_mostrar' => $username,
+                    'rol_id' => 2,
+                    'activo' => 1,
+                    'creado_en' => date('Y-m-d H:i:s')
+                ]);
+                $userId = $db->insertID();
 
-                session_regenerate_id(true);
-                $_SESSION['user_id'] = $userId;
-                $_SESSION['username'] = $username;
-                $_SESSION['role'] = 'Registrado';
-                $_SESSION['premium'] = false;
-                $_SESSION['session_log_id'] = $sessionLogId;
+                $db->table('usuarios_sesiones')->insert([
+                    'usuario_id' => $userId,
+                    'inicio' => date('Y-m-d H:i:s')
+                ]);
+                $sessionLogId = $db->insertID();
+                $db->transComplete();
 
-                echo json_encode(['success' => true, 'username' => $username, 'role' => 'Registrado', 'userId' => $userId, 'publicUserId' => $publicCode]);
-            } catch (Throwable $exception) {
-                if ($dbConn->inTransaction()) {
-                    $dbConn->rollBack();
-                }
-                echo json_encode(['success' => false, 'error' => 'Error al registrar el usuario: ' . $exception->getMessage()]);
+                $session->regenerate();
+                $session->set([
+                    'user_id' => $userId,
+                    'username' => $username,
+                    'role' => 'Registrado',
+                    'premium' => false,
+                    'session_log_id' => $sessionLogId
+                ]);
+
+                return $this->response->setJSON(['success' => true, 'username' => $username, 'role' => 'Registrado', 'userId' => $userId, 'publicUserId' => $publicCode]);
+            } catch (Throwable $e) {
+                return $this->response->setJSON(['success' => false, 'error' => 'Error al registrar: ' . $e->getMessage()]);
             }
-            return;
         }
 
         if ($action === 'login') {
             $userOrEmail = trim((string) ($data['userOrEmail'] ?? ''));
             $password = (string) ($data['password'] ?? '');
+
             if ($userOrEmail === '' || $password === '') {
-                echo json_encode(['success' => false, 'error' => 'Faltan campos obligatorios']);
-                return;
+                return $this->response->setJSON(['success' => false, 'error' => 'Faltan campos obligatorios']);
             }
 
-            $stmt = $dbConn->prepare('SELECT u.*, r.nombre AS role_name FROM usuarios u LEFT JOIN roles r ON r.id = u.rol_id WHERE u.correo = ? OR u.nombre_mostrar = ? LIMIT 1');
-            $stmt->execute([$userOrEmail, $userOrEmail]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            $user = $db->table('usuarios u')
+                       ->select('u.*, r.nombre AS role_name')
+                       ->join('roles r', 'r.id = u.rol_id', 'left')
+                       ->where('u.correo', $userOrEmail)
+                       ->orWhere('u.nombre_mostrar', $userOrEmail)
+                       ->get()->getRowArray();
 
             if (!$user) {
-                echo json_encode(['success' => false, 'error' => 'Usuario no encontrado.']);
-                return;
+                return $this->response->setJSON(['success' => false, 'error' => 'Usuario no encontrado.']);
             }
             if (!password_verify($password, (string) ($user['hash_password'] ?? ''))) {
-                echo json_encode(['success' => false, 'error' => 'La contraseña es incorrecta.']);
-                return;
+                return $this->response->setJSON(['success' => false, 'error' => 'La contraseña es incorrecta.']);
             }
             if (((int) ($user['bloqueado'] ?? 0) === 1) || ((int) ($user['activo'] ?? 1) !== 1)) {
-                echo json_encode(['success' => false, 'blocked' => true, 'error' => 'Tu cuenta esta bloqueada o inactiva.']);
-                return;
+                return $this->response->setJSON(['success' => false, 'blocked' => true, 'error' => 'Tu cuenta esta bloqueada o inactiva.']);
             }
 
             $role = (string) ($user['role_name'] ?? 'Registrado');
             $isPremium = $role === 'Admin' || ((int) ($user['es_premium'] ?? 0) === 1 && (empty($user['premium_vence_en']) || strtotime((string) $user['premium_vence_en']) > time()));
-            $dbConn->prepare('INSERT INTO usuarios_sesiones (usuario_id, inicio) VALUES (?, NOW())')->execute([(int) $user['id']]);
-            $sessionLogId = (int) $dbConn->lastInsertId();
+            
+            $db->table('usuarios_sesiones')->insert([
+                'usuario_id' => (int) $user['id'],
+                'inicio' => date('Y-m-d H:i:s')
+            ]);
+            $sessionLogId = $db->insertID();
 
-            session_regenerate_id(true);
-            $_SESSION['user_id'] = (int) $user['id'];
-            $_SESSION['username'] = (string) $user['nombre_mostrar'];
-            $_SESSION['role'] = $role;
-            $_SESSION['premium'] = $isPremium;
-            $_SESSION['session_log_id'] = $sessionLogId;
+            $session->regenerate();
+            $session->set([
+                'user_id' => (int) $user['id'],
+                'username' => (string) $user['nombre_mostrar'],
+                'role' => $role,
+                'premium' => $isPremium,
+                'session_log_id' => $sessionLogId
+            ]);
 
-            echo json_encode([
+            return $this->response->setJSON([
                 'success' => true,
                 'username' => (string) $user['nombre_mostrar'],
                 'userId' => (int) $user['id'],
@@ -161,43 +166,36 @@ final class Auth
                 'isAdmin' => $role === 'Admin',
                 'isPremium' => $isPremium,
             ]);
-            return;
         }
+
         if ($action === 'buy_premium') {
-            if (!isset($_SESSION['user_id'])) {
-                echo json_encode(['success' => false, 'error' => 'Debes iniciar sesion']);
-                return;
+            if (!$session->has('user_id')) {
+                return $this->response->setJSON(['success' => false, 'error' => 'Debes iniciar sesion']);
             }
 
             try {
-                $stmt = $dbConn->prepare('UPDATE usuarios SET es_premium = 1, premium_vence_en = DATE_ADD(NOW(), INTERVAL 30 DAY) WHERE id = ?');
-                $stmt->execute([(int) $_SESSION['user_id']]);
-                $_SESSION['premium'] = true;
-                echo json_encode(['success' => true, 'isPremium' => true]);
-            } catch (Throwable $exception) {
-                echo json_encode(['success' => false, 'error' => 'No se pudo activar premium: ' . $exception->getMessage()]);
+                $db->query('UPDATE usuarios SET es_premium = 1, premium_vence_en = DATE_ADD(NOW(), INTERVAL 30 DAY) WHERE id = ?', [(int) $session->get('user_id')]);
+                $session->set('premium', true);
+                return $this->response->setJSON(['success' => true, 'isPremium' => true]);
+            } catch (Throwable $e) {
+                return $this->response->setJSON(['success' => false, 'error' => 'No se pudo activar premium']);
             }
-            return;
         }
 
         if ($action === 'forgot_password') {
-            echo json_encode(['success' => true]);
-            return;
+            return $this->response->setJSON(['success' => true]);
         }
 
-        echo json_encode(['success' => false, 'error' => 'Accion desconocida']);
+        return $this->response->setJSON(['success' => false, 'error' => 'Accion desconocida']);
     }
 
-    private function generatePublicUserCode(PDO $dbConn): string
+    private function generatePublicUserCode(\CodeIgniter\Database\BaseConnection $db): string
     {
         do {
             $code = 'NK-' . random_int(100000, 999999);
-            $stmt = $dbConn->prepare('SELECT COUNT(*) FROM usuarios WHERE codigo_publico = ?');
-            $stmt->execute([$code]);
-        } while ((int) $stmt->fetchColumn() > 0);
+            $count = $db->table('usuarios')->where('codigo_publico', $code)->countAllResults();
+        } while ($count > 0);
 
         return $code;
     }
 }
-
-

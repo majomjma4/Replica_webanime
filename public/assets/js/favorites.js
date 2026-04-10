@@ -15,7 +15,7 @@
   
   const isLoggedIn = () => getIsLoggedIn();
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬ Clave aislada por usuario Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  // â”€â”€ Clave aislada por usuario â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Delega en AniDexProfile.getIsolatedKey para garantizar que la clave ES
   // exactamente la misma que usa layout.js al salvar/restaurar desde la BD.
   // Para invitados usa la clave base (sin sufijo) como fallback.
@@ -26,7 +26,7 @@
     return baseKey;
   };
 
-  // Getters de clave dinámica (se evalÃºan en tiempo de llamada, no al inicio)
+  // Getters de clave dinámica (se evalúan en tiempo de llamada, no al inicio)
   const KEY_MY_LIST   = () => resolveKey(BASE_MY_LIST);
   const KEY_FAVORITES = () => resolveKey(BASE_FAVORITES);
   const KEY_STATUS    = () => resolveKey(BASE_STATUS);
@@ -39,7 +39,7 @@
   const logActivity = async (action, item, details = "") => {
     if (!isLoggedIn()) return;
     try {
-      await fetch("api/activity", {
+      await fetch("api/activity.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -798,7 +798,6 @@
     }
   };
 })();
-
 
 
 

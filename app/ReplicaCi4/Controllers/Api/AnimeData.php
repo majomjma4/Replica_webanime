@@ -2,94 +2,62 @@
 
 namespace ReplicaCi4\Controllers\Api;
 
-use PDO;
-use ReplicaCi4\Models\Database;
+use ReplicaCi4\Controllers\BaseController;
 
-final class AnimeData
+final class AnimeData extends BaseController
 {
     private array $restrictedGenres = ['Hentai', 'Erotica', 'Ecchi', 'Yaoi', 'Yuri', 'Gore', 'Harem', 'Reverse Harem', 'Rx', 'Girls Love', 'Boys Love'];
     private array $restrictedTitles = ['does it count if', 'futanari'];
 
-    private function tableExists(PDO $db, string $table): bool
+    public function handle()
     {
-        try {
-            $stmt = $db->prepare('SHOW TABLES LIKE ?');
-            $stmt->execute([$table]);
-            return (bool) $stmt->fetchColumn();
-        } catch (\Throwable) {
-            return false;
-        }
-    }
+        $q = trim((string) $this->request->getGet('q'));
+        $malId = trim((string) $this->request->getGet('mal_id'));
+        $id = trim((string) $this->request->getGet('id'));
 
-    public function handle(): void
-    {
-        header('Content-Type: application/json; charset=UTF-8');
-
-        $q = trim((string) ($_GET['q'] ?? ''));
-        $malId = trim((string) ($_GET['mal_id'] ?? ''));
-        $id = trim((string) ($_GET['id'] ?? ''));
-
-        $db = (new Database())->getConnection(false);
-        if (!$db instanceof PDO) {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'error' => 'DB Connection Error']);
-            return;
-        }
-
+        $db = \Config\Database::connect();
+        
         $animeItem = null;
         if ($id !== '') {
-            $stmt = $db->prepare('SELECT * FROM anime WHERE id = ? LIMIT 1');
-            $stmt->execute([(int) $id]);
-            $animeItem = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+            $animeItem = $db->table('anime')->where('id', (int) $id)->get()->getRowArray();
         }
 
         if (!$animeItem && $malId !== '') {
-            $stmt = $db->prepare('SELECT * FROM anime WHERE mal_id = ? LIMIT 1');
-            $stmt->execute([(int) $malId]);
-            $animeItem = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+            $animeItem = $db->table('anime')->where('mal_id', (int) $malId)->get()->getRowArray();
 
             if (!$animeItem && ctype_digit($malId)) {
-                $stmt = $db->prepare('SELECT * FROM anime WHERE id = ? LIMIT 1');
-                $stmt->execute([(int) $malId]);
-                $animeItem = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+                $animeItem = $db->table('anime')->where('id', (int) $malId)->get()->getRowArray();
             }
         }
 
         if (!$animeItem && $q !== '') {
-            $stmt = $db->prepare('SELECT * FROM anime WHERE titulo = ? LIMIT 1');
-            $stmt->execute([$q]);
-            $animeItem = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+            $animeItem = $db->table('anime')->where('titulo', $q)->get()->getRowArray();
 
             if (!$animeItem) {
-                $stmt = $db->prepare('SELECT * FROM anime WHERE titulo LIKE ? LIMIT 1');
-                $stmt->execute(['%' . $q . '%']);
-                $animeItem = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+                $animeItem = $db->table('anime')->like('titulo', $q, 'both')->get()->getRowArray();
             }
         }
 
         if (!$animeItem) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Not found in local DB']);
-            return;
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Not found in local DB']);
         }
 
         $title = strtolower((string) ($animeItem['titulo'] ?? ''));
         foreach ($this->restrictedTitles as $restrictedTitle) {
             if (str_contains($title, $restrictedTitle)) {
-                http_response_code(403);
-                echo json_encode(['success' => false, 'error' => 'Restricted content']);
-                return;
+                return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Restricted content']);
             }
         }
 
-        $genreStmt = $db->prepare('SELECT g.nombre FROM generos g JOIN anime_generos ag ON g.id = ag.genero_id WHERE ag.anime_id = ?');
-        $genreStmt->execute([(int) $animeItem['id']]);
-        $genres = $genreStmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        $genres = $db->table('generos g')
+                     ->select('g.nombre')
+                     ->join('anime_generos ag', 'g.id = ag.genero_id')
+                     ->where('ag.anime_id', (int) $animeItem['id'])
+                     ->get()->getResultColumn('nombre') ?: [];
+                     
         foreach ($genres as $genreName) {
             if (in_array($genreName, $this->restrictedGenres, true)) {
-                http_response_code(403);
-                echo json_encode(['success' => false, 'error' => 'Restricted content']);
-                return;
+                return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Restricted content']);
             }
         }
 
@@ -125,69 +93,52 @@ final class AnimeData
             'episodes_data' => [],
         ];
 
-        if ($this->tableExists($db, 'anime_characters')) {
-            try {
-                $charStmt = $db->prepare('SELECT * FROM anime_characters WHERE anime_id = ?');
-                $charStmt->execute([(int) $animeItem['id']]);
-                while ($character = $charStmt->fetch(PDO::FETCH_ASSOC)) {
-                    $payload['characters'][] = [
-                        'character' => [
-                            'mal_id' => (int) ($character['mal_id'] ?? 0),
-                            'name' => (string) ($character['name'] ?? 'Unknown'),
-                            'images' => ['jpg' => ['image_url' => (string) ($character['image_url'] ?? '')]],
+        if ($db->tableExists('anime_characters')) {
+            $chars = $db->table('anime_characters')->where('anime_id', (int) $animeItem['id'])->get()->getResultArray();
+            foreach ($chars as $character) {
+                $payload['characters'][] = [
+                    'character' => [
+                        'mal_id' => (int) ($character['mal_id'] ?? 0),
+                        'name' => (string) ($character['name'] ?? 'Unknown'),
+                        'images' => ['jpg' => ['image_url' => (string) ($character['image_url'] ?? '')]],
+                    ],
+                    'role' => (string) ($character['role'] ?? 'Supporting'),
+                ];
+            }
+        }
+
+        if ($db->tableExists('anime_pictures')) {
+            $pics = $db->table('anime_pictures')->where('anime_id', (int) $animeItem['id'])->get()->getResultArray();
+            foreach ($pics as $picture) {
+                $imageUrl = (string) ($picture['image_url'] ?? '');
+                $payload['pictures'][] = ['jpg' => ['image_url' => $imageUrl, 'large_image_url' => $imageUrl]];
+            }
+        }
+
+        if ($db->tableExists('anime_videos')) {
+            $vids = $db->table('anime_videos')->where('anime_id', (int) $animeItem['id'])->get()->getResultArray();
+            foreach ($vids as $video) {
+                $payload['videos']['promo'][] = [
+                    'trailer' => [
+                        'youtube_id' => (string) ($video['youtube_id'] ?? ''),
+                        'url' => (string) ($video['url'] ?? ''),
+                        'images' => [
+                            'maximum_image_url' => (string) ($video['image_url'] ?? ''),
+                            'large_image_url' => (string) ($video['image_url'] ?? ''),
                         ],
-                        'role' => (string) ($character['role'] ?? 'Supporting'),
-                    ];
-                }
-            } catch (\Throwable) {
-                $payload['characters'] = [];
+                    ],
+                ];
             }
         }
 
-        if ($this->tableExists($db, 'anime_pictures')) {
-            try {
-                $picStmt = $db->prepare('SELECT * FROM anime_pictures WHERE anime_id = ?');
-                $picStmt->execute([(int) $animeItem['id']]);
-                while ($picture = $picStmt->fetch(PDO::FETCH_ASSOC)) {
-                    $imageUrl = (string) ($picture['image_url'] ?? '');
-                    $payload['pictures'][] = ['jpg' => ['image_url' => $imageUrl, 'large_image_url' => $imageUrl]];
-                }
-            } catch (\Throwable) {
-                $payload['pictures'] = [];
-            }
+        if ($db->tableExists('anime_episodes')) {
+            $payload['episodes_data'] = $db->table('anime_episodes')
+                                           ->select('episode_number, title, title_japanese, title_romanji, aired, score, filler, recap, synopsis')
+                                           ->where('anime_id', (int) $animeItem['id'])
+                                           ->orderBy('episode_number', 'ASC')
+                                           ->get()->getResultArray();
         }
 
-        if ($this->tableExists($db, 'anime_videos')) {
-            try {
-                $videoStmt = $db->prepare('SELECT * FROM anime_videos WHERE anime_id = ?');
-                $videoStmt->execute([(int) $animeItem['id']]);
-                while ($video = $videoStmt->fetch(PDO::FETCH_ASSOC)) {
-                    $payload['videos']['promo'][] = [
-                        'trailer' => [
-                            'youtube_id' => (string) ($video['youtube_id'] ?? ''),
-                            'url' => (string) ($video['url'] ?? ''),
-                            'images' => [
-                                'maximum_image_url' => (string) ($video['image_url'] ?? ''),
-                                'large_image_url' => (string) ($video['image_url'] ?? ''),
-                            ],
-                        ],
-                    ];
-                }
-            } catch (\Throwable) {
-                $payload['videos'] = ['promo' => []];
-            }
-        }
-
-        if ($this->tableExists($db, 'anime_episodes')) {
-            try {
-                $episodeStmt = $db->prepare('SELECT episode_number, title, title_japanese, title_romanji, aired, score, filler, recap, synopsis FROM anime_episodes WHERE anime_id = ? ORDER BY episode_number ASC');
-                $episodeStmt->execute([(int) $animeItem['id']]);
-                $payload['episodes_data'] = $episodeStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-            } catch (\Throwable) {
-                $payload['episodes_data'] = [];
-            }
-        }
-
-        echo json_encode(['success' => true, 'data' => $payload], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        return $this->response->setJSON(['success' => true, 'data' => $payload]);
     }
 }

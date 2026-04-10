@@ -4,43 +4,39 @@ declare(strict_types=1);
 
 namespace ReplicaCi4\Controllers\Api;
 
-use ReplicaCi4\Models\Database;
+use ReplicaCi4\Controllers\BaseController;
 use Throwable;
 
-final class Profile
+final class Profile extends BaseController
 {
-    public function handle(): void
+    public function handle()
     {
-        header('Content-Type: application/json; charset=UTF-8');
-        app_start_session();
-
-        $userId = $_SESSION['user_id'] ?? null;
-        if (!$userId) {
-            echo json_encode(['success' => false, 'error' => 'No session']);
-            return;
+        $session = session();
+        if (!$session->has('user_id')) {
+            return $this->response->setJSON(['success' => false, 'error' => 'No session']);
         }
 
-        $dbConn = (new Database())->getConnection();
-        if (!$dbConn) {
-            return;
-        }
-
-        $action = (string) ($_GET['action'] ?? 'get');
+        $userId = $session->get('user_id');
+        $db = \Config\Database::connect();
+        $action = (string) $this->request->getGet('action') ?: 'get';
 
         if ($action === 'get') {
-            app_require_method('GET');
-            $userStmt = $dbConn->prepare('SELECT codigo_publico FROM usuarios WHERE id = ?');
-            $userStmt->execute([$userId]);
-            $userRow = $userStmt->fetch() ?: [];
+            if ($this->request->getMethod(true) !== 'GET') {
+                return $this->response->setStatusCode(405)->setJSON(['success' => false, 'error' => 'Metodo no permitido']);
+            }
 
-            $stmt = $dbConn->prepare('SELECT meta_key, meta_value FROM usuarios_meta WHERE usuario_id = ?');
-            $stmt->execute([$userId]);
-            $meta = $stmt->fetchAll(\PDO::FETCH_KEY_PAIR);
+            $userRow = $db->table('usuarios')->select('codigo_publico')->where('id', $userId)->get()->getRowArray() ?: [];
+            
+            $metaData = $db->table('usuarios_meta')->where('usuario_id', $userId)->get()->getResultArray();
+            $meta = [];
+            foreach ($metaData as $row) {
+                $meta[$row['meta_key']] = $row['meta_value'];
+            }
 
-            echo json_encode([
+            return $this->response->setJSON([
                 'success' => true,
                 'data' => [
-                    'anidex_profile_name' => $meta['profile_name'] ?? ($_SESSION['username'] ?? ''),
+                    'anidex_profile_name' => $meta['profile_name'] ?? ($session->get('username') ?? ''),
                     'anidex_profile_desc' => $meta['profile_desc'] ?? 'Explorador de animes en la replica CI4',
                     'anidex_profile_color' => $meta['profile_color'] ?? '',
                     'anidex_profile_avatar' => $meta['profile_avatar'] ?? '',
@@ -55,35 +51,49 @@ final class Profile
                     'anidex_status_v1' => json_decode($meta['status_list'] ?? '[]', true),
                 ],
             ]);
-            return;
         }
 
         if ($action === 'save') {
-            app_require_method('POST');
+             if ($this->request->getMethod(true) !== 'POST') {
+                return $this->response->setStatusCode(405)->setJSON(['success' => false, 'error' => 'Metodo no permitido']);
+            }
             app_verify_csrf();
-            $data = app_get_json_input();
+
+            $data = $this->request->getJSON(true);
             if (!$data) {
-                echo json_encode(['success' => false, 'error' => 'No data provided']);
-                return;
+                return $this->response->setJSON(['success' => false, 'error' => 'No data provided']);
             }
 
             try {
-                $dbConn->beginTransaction();
-                $stmt = $dbConn->prepare('INSERT INTO usuarios_meta (usuario_id, meta_key, meta_value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE meta_value = VALUES(meta_value)');
+                $db->transStart();
+                $builder = $db->table('usuarios_meta');
                 foreach ($data as $key => $value) {
-                    $stmt->execute([$userId, $key, is_array($value) ? json_encode($value) : (string) $value]);
+                    $insertData = [
+                        'usuario_id' => $userId,
+                        'meta_key' => $key,
+                        'meta_value' => is_array($value) ? json_encode($value) : (string) $value
+                    ];
+                    // CI4 does not have an elegant ON DUPLICATE KEY UPDATE in QB safely without custom queries or insertBatch.
+                    // We can just rely on standard save/replace logic or query bindings.
+                    $exists = $builder->where(['usuario_id' => $userId, 'meta_key' => $key])->countAllResults(false);
+                    if ($exists > 0) {
+                        $builder->update(['meta_value' => $insertData['meta_value']]);
+                    } else {
+                        $builder->insert($insertData);
+                    }
                 }
-                $dbConn->commit();
-                echo json_encode(['success' => true]);
+                $db->transComplete();
+
+                if ($db->transStatus() === false) {
+                     return $this->response->setStatusCode(500)->setJSON(['success' => false, 'error' => 'Transaction failed']);
+                }
+
+                return $this->response->setJSON(['success' => true]);
             } catch (Throwable $exception) {
-                if ($dbConn->inTransaction()) {
-                    $dbConn->rollBack();
-                }
-                echo json_encode(['success' => false, 'error' => $exception->getMessage()]);
+                return $this->response->setJSON(['success' => false, 'error' => $exception->getMessage()]);
             }
-            return;
         }
 
-        echo json_encode(['success' => false, 'error' => 'Accion desconocida']);
+        return $this->response->setJSON(['success' => false, 'error' => 'Accion desconocida']);
     }
 }

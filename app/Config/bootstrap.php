@@ -20,6 +20,14 @@ if (!defined('APP_ROOT')) {
 if (!function_exists('replica_base_path')) {
     function replica_base_path(): string
     {
+        $envBaseUrl = trim((string) app_env('app.baseURL', ''), " '\"");
+        if ($envBaseUrl !== '') {
+            $parsedPath = parse_url($envBaseUrl, PHP_URL_PATH);
+            if (!empty($parsedPath)) {
+                return rtrim($parsedPath, '/') . '/';
+            }
+        }
+
         $scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
         $baseDir = rtrim(str_replace('\\', '/', dirname($scriptName)), '/.');
         if ($baseDir === '' || $baseDir === '.') {
@@ -131,11 +139,11 @@ if (!function_exists('app_start_session')) {
 if (!function_exists('app_csrf_token')) {
     function app_csrf_token(): string
     {
-        app_start_session();
-        if (empty($_SESSION['_csrf_token']) || !is_string($_SESSION['_csrf_token'])) {
-            $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
+        $session = session();
+        if (!$session->has('_csrf_token')) {
+            $session->set('_csrf_token', bin2hex(random_bytes(32)));
         }
-        return $_SESSION['_csrf_token'];
+        return $session->get('_csrf_token');
     }
 }
 
@@ -187,8 +195,8 @@ if (!function_exists('app_require_method')) {
 if (!function_exists('app_verify_csrf')) {
     function app_verify_csrf(): void
     {
-        app_start_session();
-        $sessionToken = (string) ($_SESSION['_csrf_token'] ?? '');
+        $session = session();
+        $sessionToken = (string) ($session->get('_csrf_token') ?? '');
         $headerToken = (string) ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
         $cookieToken = (string) ($_COOKIE['XSRF-TOKEN'] ?? '');
 
@@ -264,7 +272,7 @@ if (!function_exists('route_path')) {
         $routes = [
             'payment' => 'pago',
             'detail' => 'detail',
-            'home' => 'index',
+            'home' => '',
             'featured' => 'destacados',
             'ranking' => 'ranking',
             'series' => 'series',
@@ -279,10 +287,16 @@ if (!function_exists('route_path')) {
             'user' => 'user',
         ];
 
-        $path = $routes[$name] ?? 'index';
-        $url = asset_path($path);
+        $path = $routes[$name] ?? '';
+        
+        if (function_exists('base_url')) {
+            $url = base_url($path);
+        } else {
+            $url = asset_path($path);
+        }
+
         if ($query) {
-            $url .= '?' . http_build_query($query);
+            $url .= (strpos($url, '?') === false ? '?' : '&') . http_build_query($query);
         }
         return $url;
     }
