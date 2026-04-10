@@ -42,4 +42,14 @@ abstract class BaseController extends Controller
         // Preload any models, libraries, etc, here.
         // $this->session = service('session');
     }
+
+    protected function render(string $view, array $data = []): void
+    {
+        try {
+            echo view($view, $data);
+        } catch (\CodeIgniter\View\Exceptions\ViewException $e) {
+            http_response_code(404);
+            echo 'Vista no encontrada: ' . $view;
+        }
+    }
 }
