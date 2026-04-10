@@ -241,8 +241,8 @@ $bodyId = $seedDisplayId !== '' ? $seedDisplayId : $routeId;
 
     <div data-layout="footer"></div>
 
-    <script src="<?= asset_path('assets/js/shared-utils.js') ?>"></script>
-    <script src="<?= asset_path('assets/js/layout.js') ?>"></script>
+    <script src="<?= asset_path('assets/js/shared-utils.js?v=replica-header-3') ?>"></script>
+    <script src="<?= asset_path('assets/js/layout.js?v=replica-header-3') ?>"></script>
     <script src="<?= asset_path('assets/js/search.js') ?>"></script>
     <script src="<?= asset_path('assets/js/title-images.js') ?>"></script>
     <script src="<?= asset_path('assets/js/favorites.js') ?>"></script>

@@ -11,12 +11,29 @@
     }
   };
 
-  const buildAppUrl = (path = "") => {
+  const inferBasePath = () => {
     const sharedBuilder = window.AniDexShared?.buildAppUrl;
-    if (typeof sharedBuilder === "function") return sharedBuilder(path);
+    if (typeof sharedBuilder === "function") {
+      const base = sharedBuilder("");
+      if (base) return `${String(base).replace(/\/$/, "")}/`;
+    }
+
     const pathname = window.location.pathname.replace(/\\/g, "/");
     const publicIndex = pathname.toLowerCase().indexOf("/public/");
-    const basePath = publicIndex >= 0 ? pathname.slice(0, publicIndex + 8) : "/";
+    if (publicIndex >= 0) {
+      return `${pathname.slice(0, publicIndex + "/public/".length).replace(/\/$/, "")}/`;
+    }
+
+    const routeMatch = pathname.match(/^(.*\/)(?:index|series|peliculas|destacados|ranking|detail|user|admin|registro|ingresar)?(?:\/[^/?#]+)?\/?$/i);
+    if (routeMatch?.[1]) {
+      return `${routeMatch[1].replace(/\/$/, "")}/`;
+    }
+
+    return pathname.startsWith("/replica") ? "/replica/" : "/";
+  };
+
+  const buildAppUrl = (path = "") => {
+    const basePath = inferBasePath();
     const cleanPath = String(path || "").replace(/^\/+/, "");
     return cleanPath ? `${basePath}${cleanPath}` : basePath.replace(/\/$/, "");
   };
@@ -24,13 +41,14 @@
   const menuItems = [
     { name: "Inicio", href: buildAppUrl("index"), icon: "home" },
     { name: "Animes", href: buildAppUrl("series"), icon: "live_tv" },
-    { name: "Pel\u00edculas", href: buildAppUrl("peliculas"), icon: "movie" },
+    { name: "Películas", href: buildAppUrl("peliculas"), icon: "movie" },
     { name: "Destacados", href: buildAppUrl("destacados"), icon: "star" },
     { name: "Ranking", href: buildAppUrl("ranking"), icon: "leaderboard" }
   ];
 
   const readyCallbacks = [];
   let isReady = false;
+
   function onReady(fn) {
     if (isReady) {
       fn();
@@ -55,19 +73,20 @@
     const footerTargets = document.querySelectorAll('[data-layout="footer"]');
     if (!headerTargets.length && !footerTargets.length) return;
 
-    const basePath = window.location.pathname.includes("/views/") ? "../" : "";
-    const res = await fetch(buildAppUrl("partials/layout?v=final2"), { cache: "no-store", credentials: "same-origin" });
+    const res = await fetch(buildAppUrl("partials/layout?v=replica-header-4"), {
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+
     if (!res.ok) {
       throw new Error("No se pudo cargar partials/layout");
     }
-    const html = await res.text();
 
+    const html = await res.text();
     const container = document.createElement("div");
     container.innerHTML = html;
-
     injectLayoutStyles(container);
 
-    // Inyectar todos los templates en el body para que los scripts puedan encontrarlos
     container.querySelectorAll("template").forEach((tpl) => {
       if (tpl.id && !document.getElementById(tpl.id)) {
         document.body.appendChild(tpl.cloneNode(true));
@@ -76,7 +95,6 @@
 
     const headerTpl = container.querySelector("#layout-header");
     const footerTpl = container.querySelector("#layout-footer");
-
     const headerHtml = headerTpl ? headerTpl.innerHTML.trim() : "";
     const footerHtml = footerTpl ? footerTpl.innerHTML.trim() : "";
 
@@ -85,6 +103,7 @@
         el.innerHTML = headerHtml;
       });
     }
+
     if (footerHtml) {
       footerTargets.forEach((el) => {
         el.innerHTML = footerHtml;
@@ -97,10 +116,35 @@
     const menuEl = document.getElementById("main-menu");
     if (!menuEl) return;
 
+    const existingLinks = Array.from(menuEl.querySelectorAll("a[href]"));
+    if (existingLinks.length) {
+      existingLinks.forEach((link) => {
+        const name = link.dataset.menuItem || link.textContent.trim();
+        const iconName = link.dataset.menuIcon || "";
+        const itemUrl = new URL(link.getAttribute("href"), window.location.origin);
+        const isActive =
+          itemUrl.pathname === currentPath ||
+          (name === "Inicio" && /\/(?:index(?:\.php)?)?$/.test(currentPath));
+        const active = "text-violet-400 font-bold border-b-2 border-violet-500 pb-1";
+        const inactive = "text-neutral-400 hover:text-neutral-100 transition-colors";
+        const iconClass = isActive ? "nav-icon nav-icon--active" : "nav-icon";
+
+        link.className = isActive ? active : inactive;
+        if (iconName) {
+          link.innerHTML = `<span class="inline-flex items-center gap-2"><span class="material-symbols-outlined text-[18px] leading-none ${iconClass}">${iconName}</span><span class="nav-label">${name}</span></span>`;
+        } else {
+          link.textContent = name;
+        }
+      });
+      return;
+    }
+
     menuEl.innerHTML = menuItems
       .map((item) => {
         const itemUrl = new URL(item.href, window.location.origin);
-        const isActive = itemUrl.pathname === currentPath || (item.name === "Inicio" && /\/index(?:\.php)?$/.test(currentPath));
+        const isActive =
+          itemUrl.pathname === currentPath ||
+          (item.name === "Inicio" && /\/index(?:\.php)?$/.test(currentPath));
         const active = "text-violet-400 font-bold border-b-2 border-violet-500 pb-1";
         const base = "transition-colors";
         const inactive = "text-neutral-400 hover:text-neutral-100";
@@ -111,7 +155,7 @@
         const label = item.icon
           ? `<span class="inline-flex items-center gap-2">${icon}<span class="nav-label">${item.name}</span></span>`
           : item.name;
-        return `<a href="${item.href}" class="${isActive ? active : inactive + " " + base}">${label}</a>`;
+        return `<a href="${item.href}" class="${isActive ? active : `${inactive} ${base}`}">${label}</a>`;
       })
       .join("");
   }
@@ -144,7 +188,7 @@
   }
 
   function getIsolatedKey(baseKey) {
-    const id = (authState && authState.logged && authState.userId) ? authState.userId : getOrCreateUserId();
+    const id = authState && authState.logged && authState.userId ? authState.userId : getOrCreateUserId();
     return `${baseKey}_${id}`;
   }
 
@@ -153,7 +197,6 @@
     const totalMinutes = Math.max(0, Math.round(total * 60));
     const h = Math.floor(totalMinutes / 60);
     const m = totalMinutes % 60;
-
     if (h <= 0) return `${m} min`;
     if (m === 0) return `${h} h`;
     return `${h} h ${String(m).padStart(2, "0")} min`;
@@ -165,13 +208,10 @@
     return `NekoraUser_${getOrCreateUserSuffix()}`;
   }
 
-  // FIX: Ahora acepta preReadGuestId para evitar leer el ID YA sobreescrito.
   function migrateGuestData(realUserId, preReadGuestId) {
     try {
-      // IMPORTANTE: usar el ID leido antes de sobrescribir anidex_user_id.
       const guestId = preReadGuestId || localStorage.getItem("anidex_user_id");
       if (!guestId || guestId === realUserId) return;
-
       const keysToMigrate = [
         "anidex_profile_hours",
         "anidex_profile_prefs",
@@ -184,46 +224,54 @@
         "anidex_status_v1"
       ];
 
-      keysToMigrate.forEach(baseKey => {
+      keysToMigrate.forEach((baseKey) => {
         const guestKey = `${baseKey}_${guestId}`;
         const realKey = `${baseKey}_${realUserId}`;
         const guestVal = localStorage.getItem(guestKey);
         if (!guestVal) return;
-
         const realVal = localStorage.getItem(realKey);
 
         if (baseKey === "anidex_profile_hours") {
-          // Para horas: sumar (el usuario ya vio ese tiempo como invitado)
           const total = (parseFloat(guestVal || "0") + parseFloat(realVal || "0")).toFixed(2);
           localStorage.setItem(realKey, total);
           localStorage.removeItem(guestKey);
           return;
         }
 
-        // Para el resto: solo migrar si el valor real esta vacio.
         if (!realVal || realVal === "0" || realVal === "[]" || realVal === "{}") {
           localStorage.setItem(realKey, guestVal);
           localStorage.removeItem(guestKey);
         }
       });
-    } catch (e) { console.error("Migration error:", e); }
+    } catch (e) {
+      console.error("Migration error:", e);
+    }
   }
 
-  let authState = { logged: false, username: "", userId: null, role: "Invitado", isAdmin: false, isPremium: false };
+  let authState = {
+    logged: false,
+    username: "",
+    userId: null,
+    role: "Invitado",
+    isAdmin: false,
+    isPremium: false
+  };
 
   async function checkAuth() {
     try {
-      const res = await fetch(buildAppUrl("api/auth?action=check"), { cache: "no-store", credentials: "same-origin" });
-      if (!res.ok) throw new Error("HTTP error " + res.status);
+      const res = await fetch(buildAppUrl("api/auth?action=check"), {
+        cache: "no-store",
+        credentials: "same-origin"
+      });
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
       authState = await res.json();
-      // Sync legacy localStorage
+
       if (authState.logged) {
         localStorage.setItem("nekora_logged_in", "true");
         localStorage.setItem("nekora_user", authState.username);
         if (authState.isAdmin) localStorage.setItem("nekora_admin", "true");
         if (authState.isPremium) localStorage.setItem("nekora_premium", "true");
         else localStorage.removeItem("nekora_premium");
-
         if (authState.userId) {
           const oldGuestId = localStorage.getItem("anidex_user_id");
           localStorage.setItem("anidex_user_id", authState.userId);
@@ -279,21 +327,19 @@
       });
     } catch {}
   }
+
   async function setupProfileMenu() {
     const profileBtn = document.querySelector("[data-profile-trigger]");
     const guestMenu = document.querySelector("[data-guest-menu]");
     const nameEls = document.querySelectorAll("[data-profile-name]");
     const logged = isLoggedIn();
-    const role = getRole();
 
     nameEls.forEach((el) => {
-        el.textContent = logged ? authState.username : getGuestName();
+      el.textContent = logged ? authState.username : getGuestName();
     });
 
-    if (logged) {
-      if (guestMenu) {
-        guestMenu.remove();
-      }
+    if (logged && guestMenu) {
+      guestMenu.remove();
     }
 
     if (profileBtn && !profileBtn.dataset.bound) {
@@ -310,6 +356,7 @@
         menu.classList.toggle("hidden", isOpen);
         profileBtn.setAttribute("aria-expanded", isOpen ? "false" : "true");
       });
+
       document.addEventListener("click", (e) => {
         if (isLoggedIn()) return;
         const menu = document.querySelector("[data-guest-menu]");
@@ -326,7 +373,6 @@
       window.AniDexI18n.init();
       return;
     }
-
     let tries = 0;
     const timer = setInterval(() => {
       tries += 1;
@@ -344,7 +390,6 @@
       window.AniDexSearch.init();
       return;
     }
-
     let tries = 0;
     const timer = setInterval(() => {
       tries += 1;
@@ -359,29 +404,24 @@
 
   function initSessionTimer() {
     if (!isLoggedIn()) return;
-
     let activeSince = document.visibilityState === "visible" ? Date.now() : null;
 
     const syncDelta = (deltaMs) => {
       if (!deltaMs || deltaMs < 1000 || !isLoggedIn()) return;
-
       const deltaHours = deltaMs / (1000 * 60 * 60);
-
       try {
         const key = getIsolatedKey("anidex_profile_hours");
         const currentHours = parseFloat(localStorage.getItem(key) || "0");
         const newTotal = (currentHours + deltaHours).toFixed(4);
         localStorage.setItem(key, newTotal);
-
         const hoursEl = document.querySelector("[data-profile-hours]");
         if (hoursEl) hoursEl.textContent = formatHours(newTotal);
-
         fetch(buildAppUrl("api/activity"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "time_sync", delta: deltaHours.toFixed(4) })
         }).catch(() => {});
-      } catch (e) {}
+      } catch {}
     };
 
     const pauseTracking = () => {
@@ -400,7 +440,6 @@
       if (document.visibilityState === "visible") resumeTracking();
       else pauseTracking();
     });
-
     window.addEventListener("focus", resumeTracking);
     window.addEventListener("blur", pauseTracking);
     window.addEventListener("pagehide", pauseTracking);
@@ -420,10 +459,14 @@
     setActiveMenu();
     const adminBtn = document.getElementById("admin-mode-btn");
     if (!isLoggedIn() || localStorage.getItem("nekora_user") !== "Admin99") {
-      try { localStorage.removeItem("nekora_admin"); } catch {}
+      try {
+        localStorage.removeItem("nekora_admin");
+      } catch {}
     }
     if (isLoggedIn() && isAdmin()) {
-      try { localStorage.setItem("nekora_premium", "true"); } catch {}
+      try {
+        localStorage.setItem("nekora_premium", "true");
+      } catch {}
     }
     if (adminBtn) {
       const showAdmin = isLoggedIn() && isAdmin();
@@ -438,7 +481,6 @@
       getOrCreateUserId();
       restoreFromDB();
     }
-
     isReady = true;
     while (readyCallbacks.length) {
       const fn = readyCallbacks.shift();
@@ -450,6 +492,20 @@
     }
     initI18nWhenReady();
     initSearchWhenReady();
+  }
+
+  async function ensureLayoutPresent() {
+    const hasHeader = Array.from(document.querySelectorAll('[data-layout="header"]')).some((el) => el.children.length || el.textContent.trim());
+    const hasFooter = Array.from(document.querySelectorAll('[data-layout="footer"]')).some((el) => el.children.length || el.textContent.trim());
+    if (hasHeader && hasFooter) return;
+    try {
+      await loadLayout();
+      setActiveMenu();
+      syncProfileAvatar();
+      setupProfileMenu();
+    } catch (err) {
+      console.warn("No se pudo reintentar header/footer:", err);
+    }
   }
 
   async function initLayout() {
@@ -472,6 +528,7 @@
 
   window.addEventListener("load", () => {
     requestAnimationFrame(forceScrollTop);
+    ensureLayoutPresent();
   });
 
   window.__anidex_restoring = false;
@@ -497,7 +554,9 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
       });
-    } catch (e) { console.error("Error saving profile to DB:", e); }
+    } catch (e) {
+      console.error("Error saving profile to DB:", e);
+    }
   }
 
   async function restoreFromDB() {
@@ -508,9 +567,6 @@
       const json = await res.json();
       if (json.success && json.data) {
         const d = json.data;
-        // tiene reglas distintas (MAX, suma sin sufijo, etc.).
-        //
-        //  anidex_profile_name/desc/
         const LOOP_EXCLUSION = new Set([
           "anidex_profile_hours",
           "anidex_user_id",
@@ -520,51 +576,56 @@
           "anidex_profile_avatar",
           "anidex_profile_member_since"
         ]);
-        Object.keys(d).forEach(key => {
-          if (!key.startsWith("anidex_") || LOOP_EXCLUSION.has(key)) return;
 
+        Object.keys(d).forEach((key) => {
+          if (!key.startsWith("anidex_") || LOOP_EXCLUSION.has(key)) return;
           const serverVal = d[key];
           const localKey = getIsolatedKey(key);
           const localValRaw = localStorage.getItem(localKey);
           let finalVal = serverVal;
 
-          // Mezcla Inteligente para Listas
           if (Array.isArray(serverVal)) {
             let localArr = [];
-            try { localArr = localValRaw ? JSON.parse(localValRaw) : []; } catch(e) {}
+            try {
+              localArr = localValRaw ? JSON.parse(localValRaw) : [];
+            } catch {}
             if (!Array.isArray(localArr)) localArr = [];
             const seen = new Set();
             const merged = [];
-            [...localArr, ...serverVal].forEach(item => {
+            [...localArr, ...serverVal].forEach((item) => {
               const id = item.malId || item.id || (item.title ? item.title.toLowerCase() : null);
-              if (id && !seen.has(id)) { seen.add(id); merged.push(item); }
+              if (id && !seen.has(id)) {
+                seen.add(id);
+                merged.push(item);
+              }
             });
             finalVal = merged;
           } else if (typeof serverVal === "object" && serverVal !== null) {
-            // Mezcla de objetos (status_v1, etc.): local prevalece
             let localObj = {};
-            try { localObj = localValRaw ? JSON.parse(localValRaw) : {}; } catch(e) {}
+            try {
+              localObj = localValRaw ? JSON.parse(localValRaw) : {};
+            } catch {}
             finalVal = Object.assign({}, serverVal, localObj);
           }
 
-          const valStr = (typeof finalVal === "object") ? JSON.stringify(finalVal) : String(finalVal);
+          const valStr = typeof finalVal === "object" ? JSON.stringify(finalVal) : String(finalVal);
           if (valStr && valStr !== "[]" && valStr !== "{}" && valStr !== "null") {
             localStorage.setItem(localKey, valStr);
           }
         });
-        // profile_name se guarda SIN sufijo; el resto CON sufijo aislado.
-        if (d.anidex_profile_name)         localStorage.setItem("anidex_profile_name",                              d.anidex_profile_name);
-        if (d.anidex_profile_desc)         localStorage.setItem(getIsolatedKey("anidex_profile_desc"),         d.anidex_profile_desc);
-        if (d.anidex_profile_color)        localStorage.setItem(getIsolatedKey("anidex_profile_color"),        d.anidex_profile_color);
-        if (d.anidex_profile_avatar)       localStorage.setItem(getIsolatedKey("anidex_profile_avatar"),       d.anidex_profile_avatar);
-        if (d.anidex_profile_avatar)       localStorage.setItem("anidex_profile_avatar", d.anidex_profile_avatar);
+
+        if (d.anidex_profile_name) localStorage.setItem("anidex_profile_name", d.anidex_profile_name);
+        if (d.anidex_profile_desc) localStorage.setItem(getIsolatedKey("anidex_profile_desc"), d.anidex_profile_desc);
+        if (d.anidex_profile_color) localStorage.setItem(getIsolatedKey("anidex_profile_color"), d.anidex_profile_color);
+        if (d.anidex_profile_avatar) localStorage.setItem(getIsolatedKey("anidex_profile_avatar"), d.anidex_profile_avatar);
+        if (d.anidex_profile_avatar) localStorage.setItem("anidex_profile_avatar", d.anidex_profile_avatar);
         if (d.anidex_profile_member_since) localStorage.setItem(getIsolatedKey("anidex_profile_member_since"), d.anidex_profile_member_since);
-        if (d.anidex_public_user_id)       localStorage.setItem("anidex_public_user_id", d.anidex_public_user_id);
-        // Se usa Math.max en vez de "if server > local" para garantizar atomicidad.
+        if (d.anidex_public_user_id) localStorage.setItem("anidex_public_user_id", d.anidex_public_user_id);
+
         const serverHoursRaw = d.anidex_profile_hours;
         if (serverHoursRaw !== undefined && serverHoursRaw !== null) {
           const localKey = getIsolatedKey("anidex_profile_hours");
-          const local  = parseFloat(localStorage.getItem(localKey) || "0");
+          const local = parseFloat(localStorage.getItem(localKey) || "0");
           const server = parseFloat(serverHoursRaw || "0");
           const winner = Math.max(local, server);
           localStorage.setItem(localKey, winner.toFixed(2));
@@ -586,12 +647,18 @@
   }
 
   const refreshCallbacks = [];
+
   function registerRefresh(fn) {
     if (typeof fn === "function") refreshCallbacks.push(fn);
   }
+
   function triggerRefresh() {
-    refreshCallbacks.forEach(fn => {
-      try { fn(); } catch (e) { console.error("Global Refresh Error:", e); }
+    refreshCallbacks.forEach((fn) => {
+      try {
+        fn();
+      } catch (e) {
+        console.error("Global Refresh Error:", e);
+      }
     });
   }
 
@@ -610,18 +677,9 @@
   window.AniDexProfile = {
     saveToDB: saveProfileToDB,
     restoreFromDB: restoreFromDB,
-    getOrCreateUserId: getOrCreateUserId,
-    getOrCreateUserSuffix: getOrCreateUserSuffix,
-    getIsolatedKey: getIsolatedKey,
-    formatHours: formatHours
+    getOrCreateUserId,
+    getOrCreateUserSuffix,
+    getIsolatedKey,
+    formatHours
   };
 })();
-
-
-
-
-
-
-
-
-

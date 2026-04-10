@@ -17,11 +17,26 @@ $scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
 $baseDir = rtrim(str_replace('\\', '/', dirname($scriptName)), '/.');
 $path = (string) parse_url($requestUri, PHP_URL_PATH);
 $replicaDir = '/' . basename(dirname(__DIR__));
+$appUrlPath = rtrim((string) parse_url((string) app_env('APP_URL', ''), PHP_URL_PATH), '/');
 
-if ($baseDir !== '' && $baseDir !== '/' && str_starts_with($path, $baseDir)) {
-    $path = substr($path, strlen($baseDir));
-} elseif ($replicaDir !== '/' && str_starts_with($path, $replicaDir)) {
-    $path = substr($path, strlen($replicaDir));
+$prefixes = array_values(array_filter([
+    $baseDir,
+    $appUrlPath,
+    $replicaDir,
+], static fn (string $prefix): bool => $prefix !== '' && $prefix !== '/'));
+
+usort($prefixes, static fn (string $a, string $b): int => strlen($b) <=> strlen($a));
+
+foreach ($prefixes as $prefix) {
+    if (str_starts_with($path, $prefix . '/')) {
+        $path = substr($path, strlen($prefix));
+        break;
+    }
+
+    if ($path === $prefix) {
+        $path = '/';
+        break;
+    }
 }
 
 $route = trim($path, '/');
