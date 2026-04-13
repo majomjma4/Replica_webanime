@@ -39,6 +39,37 @@ const AniDexDetailDataBoot = () => {
     "Award Winning": "Premiado"
   };
 
+  const showNotFoundError = () => {
+    console.error("NekoraDetail: Anime no encontrado.");
+    
+    // Quitar precarga si existe
+    document.documentElement.classList.remove("preload-ui");
+
+    const hero = document.getElementById("detail-hero");
+    if (hero) {
+      hero.innerHTML = `
+        <div class="flex flex-col items-center justify-center w-full h-full min-h-[400px] text-center px-4">
+          <div class="bg-surface-bright/20 backdrop-blur-md p-8 rounded-3xl border border-white/10 shadow-2xl max-w-md">
+            <span class="material-symbols-outlined text-7xl text-primary-dim mb-4">search_off</span>
+            <h1 class="text-3xl font-extrabold text-on-surface mb-2">Anime no encontrado</h1>
+            <p class="text-on-surface-variant mb-8">No pudimos encontrar información para este anime en la réplica. Podría ser un ID inválido o un recurso eliminado.</p>
+            <a href="${appUrl("")}" class="inline-flex items-center gap-2 px-6 py-3 bg-primary-dim text-on-primary font-bold rounded-full hover:scale-105 transition-transform">
+              <span class="material-symbols-outlined">home</span>
+              Volver al Inicio
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    // Ocultar otras secciones que podrían estar visibles como esqueletos
+    const sections = ["detail-synopsis-section", "detail-characters-section", "detail-images-section", "detail-videos-section"];
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+  };
+
   const baseNormalize = window.AniDexShared?.normalizeText || ((value) => String(value || "").toLowerCase().trim());
   const norm = (v) =>
     baseNormalize(v)
@@ -387,7 +418,7 @@ const AniDexDetailDataBoot = () => {
     }
 
     if (!full) {
-      console.warn("NekoraDetail: No se pudo obtener información del anime.");
+      showNotFoundError();
       return;
     }
 

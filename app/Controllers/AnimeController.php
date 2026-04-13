@@ -81,6 +81,12 @@ class AnimeController extends BaseController
         if ($detailRef === '') {
             $detailRef = app_detail_ref_from_input($legacyId, $legacyTitle);
         }
+
+        // Validación estricta para prevenir carga infinita o rutas basura
+        if ($detailRef !== '' && !app_is_valid_detail_ref($detailRef)) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Referencia de anime inválida: " . $detailRef);
+        }
+
         $detailQuery = $detailRef !== '' && !ctype_digit($detailRef) ? str_replace('-', ' ', $detailRef) : '';
         
         $isLoggedIn = $session->has('user_id');

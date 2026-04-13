@@ -20,6 +20,7 @@ final class SaveAnime extends BaseController
         }
 
         $db = \Config\Database::connect();
+        $this->ensureTables($db);
 
         $malId = (int) ($data['mal_id'] ?? 0);
         $title = trim((string) ($data['title'] ?? $data['titulo'] ?? 'Unknown'));
@@ -205,7 +206,91 @@ final class SaveAnime extends BaseController
             return $this->response->setJSON(['success' => true, 'message' => 'Anime processed successfully', 'id' => $animeId, 'action' => $action]);
             
         } catch (\Exception $exception) {
+            if (isset($db) && $db->transStatus() === false) {
+                // CI4 transRollback is usually handled by transComplete if it failed, 
+                // but we can force it here if needed.
+            }
             return $this->response->setStatusCode(500)->setJSON(['success' => false, 'error' => $exception->getMessage()]);
+        }
+    }
+
+    /**
+     * Asegura que las tablas necesarias para la persistencia de anime existan.
+     */
+    private function ensureTables($db)
+    {
+        $queries = array(
+            "CREATE TABLE IF NOT EXISTS anime (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                mal_id INT UNIQUE NOT NULL,
+                titulo VARCHAR(255) NOT NULL,
+                titulo_ingles VARCHAR(255),
+                tipo VARCHAR(50),
+                estudio VARCHAR(255),
+                estado VARCHAR(50),
+                episodios INT DEFAULT 0,
+                temporada VARCHAR(50),
+                anio INT,
+                clasificacion VARCHAR(100),
+                sinopsis TEXT,
+                imagen_url VARCHAR(500),
+                trailer_url VARCHAR(500),
+                puntuacion FLOAT DEFAULT 0,
+                activo TINYINT(1) DEFAULT 1,
+                creado_en DATETIME
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;",
+
+            "CREATE TABLE IF NOT EXISTS generos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nombre VARCHAR(100) UNIQUE NOT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;",
+
+            "CREATE TABLE IF NOT EXISTS anime_generos (
+                anime_id INT NOT NULL,
+                genero_id INT NOT NULL,
+                PRIMARY KEY (anime_id, genero_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;",
+
+            "CREATE TABLE IF NOT EXISTS anime_characters (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                anime_id INT NOT NULL,
+                mal_id INT NOT NULL,
+                name VARCHAR(255),
+                role VARCHAR(100),
+                image_url VARCHAR(500)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;",
+
+            "CREATE TABLE IF NOT EXISTS anime_pictures (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                anime_id INT NOT NULL,
+                image_url VARCHAR(500)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;",
+
+            "CREATE TABLE IF NOT EXISTS anime_videos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                anime_id INT NOT NULL,
+                youtube_id VARCHAR(100),
+                url VARCHAR(500),
+                image_url VARCHAR(500)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;",
+
+            "CREATE TABLE IF NOT EXISTS anime_episodes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                anime_id INT NOT NULL,
+                episode_number INT NOT NULL,
+                title VARCHAR(255),
+                title_japanese VARCHAR(255),
+                title_romanji VARCHAR(255),
+                aired VARCHAR(100),
+                score FLOAT,
+                filler TINYINT(1) DEFAULT 0,
+                recap TINYINT(1) DEFAULT 0,
+                synopsis TEXT
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"
+        );
+
+        foreach ($queries as $q) {
+            $db->query($q);
         }
     }
 }

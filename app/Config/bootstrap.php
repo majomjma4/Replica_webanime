@@ -243,6 +243,25 @@ if (!function_exists('app_slugify')) {
     }
 }
 
+if (!function_exists('app_is_valid_detail_ref')) {
+    function app_is_valid_detail_ref(string $ref): bool
+    {
+        $ref = trim($ref);
+        if ($ref === '') return false;
+        
+        // Si es puramente numérico, limitamos la longitud para prevenir basura o IDs manipulados
+        // MyAnimeList (MAL) actualmente está en el rango de 6 dígitos (60k+), 7 dígitos (~9M) es un límite futuro seguro.
+        if (ctype_digit($ref)) {
+            // Si tiene más de 7 dígitos, lo consideramos inválido/manipulado
+            if (strlen($ref) > 7) return false;
+            return true;
+        }
+
+        // Si contiene letras, permitimos el formato slug estándar
+        return preg_match('/^[a-z0-9-]+$/i', $ref) === 1;
+    }
+}
+
 if (!function_exists('app_detail_ref_from_input')) {
     function app_detail_ref_from_input(string $malId = '', string $title = '', string $dbId = ''): string
     {
