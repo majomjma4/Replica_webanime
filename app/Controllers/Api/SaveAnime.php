@@ -8,7 +8,7 @@ final class SaveAnime extends BaseController
 {
     public function handle()
     {
-        if ($this->request->getMethod(true) !== 'POST') {
+        if (strtoupper($this->request->getMethod()) !== 'POST') {
             return $this->response->setStatusCode(405)->setJSON(['success' => false, 'error' => 'Metodo no permitido']);
         }
         

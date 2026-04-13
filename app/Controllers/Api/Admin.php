@@ -14,12 +14,12 @@ final class Admin extends BaseController
         $action = (string) ($this->request->getGet('action') ?? '');
         $writeActions = ['add_anime', 'update_studio', 'update_anime', 'delete_anime'];
         if (in_array($action, $writeActions, true)) {
-            if ($this->request->getMethod(true) !== 'POST') {
+            if (strtoupper($this->request->getMethod()) !== 'POST') {
                 return $this->response->setStatusCode(405)->setJSON(['success' => false, 'error' => 'Metodo no permitido']);
             }
             app_verify_csrf();
         } else {
-            if ($this->request->getMethod(true) !== 'GET' && $this->request->getMethod(true) !== 'POST') {
+            if (strtoupper($this->request->getMethod()) !== 'GET' && strtoupper($this->request->getMethod()) !== 'POST') {
                 return $this->response->setStatusCode(405)->setJSON(['success' => false, 'error' => 'Metodo no permitido']);
             }
         }

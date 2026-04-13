@@ -14,11 +14,11 @@ final class Auth extends BaseController
         $action = (string) $this->request->getGet('action') ?: 'check';
         
         if ($action === 'check') {
-            if ($this->request->getMethod(true) !== 'GET') {
+            if (strtoupper($this->request->getMethod()) !== 'GET') {
                 return $this->response->setStatusCode(405)->setJSON(['success' => false, 'error' => 'Metodo no permitido']);
             }
         } else {
-            if ($this->request->getMethod(true) !== 'POST') {
+            if (strtoupper($this->request->getMethod()) !== 'POST') {
                 return $this->response->setStatusCode(405)->setJSON(['success' => false, 'error' => 'Metodo no permitido']);
             }
             // CodeIgniter CSRF is automated if enabled in Filters, but we'll enforce our manual session one just in case

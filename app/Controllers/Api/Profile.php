@@ -21,7 +21,7 @@ final class Profile extends BaseController
         $action = (string) $this->request->getGet('action') ?: 'get';
 
         if ($action === 'get') {
-            if ($this->request->getMethod(true) !== 'GET') {
+            if (strtoupper($this->request->getMethod()) !== 'GET') {
                 return $this->response->setStatusCode(405)->setJSON(['success' => false, 'error' => 'Metodo no permitido']);
             }
 
@@ -54,7 +54,7 @@ final class Profile extends BaseController
         }
 
         if ($action === 'save') {
-             if ($this->request->getMethod(true) !== 'POST') {
+             if (strtoupper($this->request->getMethod()) !== 'POST') {
                 return $this->response->setStatusCode(405)->setJSON(['success' => false, 'error' => 'Metodo no permitido']);
             }
             app_verify_csrf();
