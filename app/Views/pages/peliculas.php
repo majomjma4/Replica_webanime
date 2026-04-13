@@ -298,7 +298,7 @@
       grid-column: 1 / -1;
     }
     </style>
-    <link rel="icon" href="<?= asset_path('img/icon3.png') ?>" />
+    <link rel="icon" href="<?= asset_path('img/icon3.webp') ?>" />
   </head>
   <body class="bg-background text-on-background font-body selection:bg-[#AC85DB]/30 selection:text-[#996AD2]">
     <div class="min-h-screen">
@@ -464,7 +464,7 @@
         <div class="relative aspect-[2/3] overflow-hidden rounded-lg bg-surface-container-high">
           <img alt="<?= htmlspecialchars($a['titulo']) ?>" 
                class="h-full w-full object-cover transition-transform duration-500 ease-snappy group-hover:scale-[1.03]" 
-               src="<?= htmlspecialchars($a['imagen_url'] ?? 'img/fondoanime.png') ?>" loading="lazy" referrerpolicy="no-referrer"/>
+               src="<?= htmlspecialchars($a['imagen_url'] ?? 'img/fondoanime.webp') ?>" loading="lazy" referrerpolicy="no-referrer"/>
           <span class="absolute left-3 top-3 rounded-full bg-surface/90 px-4 py-1.5 text-sm font-bold text-on-surface shadow-lg"><?= htmlspecialchars($a['anio'] ?? '') ?></span>
           <?php if (!empty($a['puntuacion'])) { ?>
           <span class="anidex-score-badge absolute top-3 right-3 bg-surface-container-lowest/80 backdrop-blur px-2 py-1 rounded text-xs font-bold text-primary flex items-center gap-1">

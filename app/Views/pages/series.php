@@ -345,7 +345,7 @@
       grid-column: 1 / -1;
     }
   </style>
-  <link rel="icon" href="<?= asset_path('img/icon3.png') ?>" />
+  <link rel="icon" href="<?= asset_path('img/icon3.webp') ?>" />
 
 
 </head>
@@ -534,7 +534,7 @@
                     <div class="relative aspect-[2/3] overflow-hidden rounded-lg bg-surface-container-high">
                       <img alt="<?= htmlspecialchars($a['titulo']) ?>"
                         class="h-full w-full object-cover transition-transform duration-500 ease-snappy group-hover:scale-[1.03]"
-                        src="<?= htmlspecialchars($a['imagen_url'] ?? 'img/fondoanime.png') ?>" loading="lazy"
+                        src="<?= htmlspecialchars($a['imagen_url'] ?? 'img/fondoanime.webp') ?>" loading="lazy"
                         referrerpolicy="no-referrer" />
                       <span
                         class="absolute left-3 bottom-3 rounded-full bg-surface/90 px-4 py-1.5 text-sm font-bold text-on-surface shadow-lg"><?= htmlspecialchars($a['anio'] ?? '') ?></span>

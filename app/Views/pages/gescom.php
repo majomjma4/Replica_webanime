@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html class="dark" lang="es"><head>
-<link rel="icon" href="img/icon3.png" />
+<link rel="icon" href="img/icon3.webp" />
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>NekoraList - Gestion de Comentarios</title>

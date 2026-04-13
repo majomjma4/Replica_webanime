@@ -111,7 +111,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NekoraList - Usuario</title>
-  <link rel="icon" href="<?= asset_path('img/icon3.png') ?>" />
+  <link rel="icon" href="<?= asset_path('img/icon3.webp') ?>" />
   <link
     href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Inter:wght@400;500;600&display=swap"
     rel="stylesheet" />
@@ -296,7 +296,7 @@
       background: linear-gradient(90deg, rgba(52, 211, 153, 0.95), rgba(16, 185, 129, 0.7));
     }
   </style>
-  <link rel="icon" href="<?= asset_path('img/icon3.png') ?>" />
+  <link rel="icon" href="<?= asset_path('img/icon3.webp') ?>" />
 
 
 </head>

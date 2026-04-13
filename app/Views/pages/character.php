@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="img/icon3.png" />
+    <link rel="icon" href="img/icon3.webp" />
     <title>NekoraList - Personaje</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>

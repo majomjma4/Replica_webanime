@@ -3,7 +3,7 @@
 <html class="dark" lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<link rel="icon" href="img/icon3.png"/>
+<link rel="icon" href="img/icon3.webp"/>
 <title>NekoraList - Pago Seguro</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -205,25 +205,25 @@
       <label class="cursor-pointer">
         <input class="sr-only peer" type="radio" name="method-type" value="visa" checked/>
         <span class="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-on-surface-variant transition-all hover:border-[#38bdf8] hover:text-[#38bdf8] hover:bg-[#38bdf8]/10 peer-checked:border-[#38bdf8] peer-checked:text-[#38bdf8] peer-checked:bg-[#38bdf8]/10 peer-checked:shadow-[0_0_12px_rgba(56,189,248,0.35)] pay-option pay-option--card">
-          <img src="img/visa.png" alt="Visa" class="h-4 w-4 object-contain" loading="lazy" decoding="async"/>Visa
+          <img src="img/visa.webp" alt="Visa" class="h-4 w-4 object-contain" loading="lazy" decoding="async"/>Visa
         </span>
       </label>
       <label class="cursor-pointer">
         <input class="sr-only peer" type="radio" name="method-type" value="amex"/>
         <span class="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-on-surface-variant transition-all hover:border-[#38bdf8] hover:text-[#38bdf8] hover:bg-[#38bdf8]/10 peer-checked:border-[#38bdf8] peer-checked:text-[#38bdf8] peer-checked:bg-[#38bdf8]/10 peer-checked:shadow-[0_0_12px_rgba(56,189,248,0.35)] pay-option pay-option--card">
-          <img src="img/amex.png" alt="American Express" class="h-4 w-4 object-contain" loading="lazy" decoding="async"/>Amex
+          <img src="img/amex.webp" alt="American Express" class="h-4 w-4 object-contain" loading="lazy" decoding="async"/>Amex
         </span>
       </label>
       <label class="cursor-pointer">
         <input class="sr-only peer" type="radio" name="method-type" value="discover"/>
         <span class="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-on-surface-variant transition-all hover:border-[#38bdf8] hover:text-[#38bdf8] hover:bg-[#38bdf8]/10 peer-checked:border-[#38bdf8] peer-checked:text-[#38bdf8] peer-checked:bg-[#38bdf8]/10 peer-checked:shadow-[0_0_12px_rgba(56,189,248,0.35)] pay-option pay-option--card">
-          <img src="img/discover.png" alt="Discover" class="h-4 w-4 object-contain" loading="lazy" decoding="async"/>Discover
+          <img src="img/discover.webp" alt="Discover" class="h-4 w-4 object-contain" loading="lazy" decoding="async"/>Discover
         </span>
       </label>
       <label class="cursor-pointer">
         <input class="sr-only peer" type="radio" name="method-type" value="jcb"/>
         <span class="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-on-surface-variant transition-all hover:border-[#38bdf8] hover:text-[#38bdf8] hover:bg-[#38bdf8]/10 peer-checked:border-[#38bdf8] peer-checked:text-[#38bdf8] peer-checked:bg-[#38bdf8]/10 peer-checked:shadow-[0_0_12px_rgba(56,189,248,0.35)] pay-option pay-option--card">
-          <img src="img/jcb.png" alt="JCB" class="h-4 w-4 object-contain" loading="lazy" decoding="async"/>JCB
+          <img src="img/jcb.webp" alt="JCB" class="h-4 w-4 object-contain" loading="lazy" decoding="async"/>JCB
         </span>
       </label>
     </div>
@@ -293,7 +293,7 @@
 <!-- Product Card -->
 <div class="bg-surface-container p-4 rounded-lg flex gap-4 items-center">
 <div class="w-24 h-24 bg-surface-container-highest rounded-lg overflow-hidden flex-shrink-0 relative border border-primary/20">
-<img alt="NekoraList icon" class="w-full h-full object-cover" data-alt="NekoraList icon" src="img/icon.png"/>
+<img alt="NekoraList icon" class="w-full h-full object-cover" data-alt="NekoraList icon" src="img/icon.webp"/>
 <div class="absolute inset-0 bg-primary/10 mix-blend-overlay"></div>
 </div>
 <div class="flex-grow">

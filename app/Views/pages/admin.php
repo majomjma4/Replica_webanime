@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html class="dark" lang="en"><head>
-<link rel="icon" href="img/icon3.png" />
+<link rel="icon" href="img/icon3.webp" />
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>NekoraList - Solicitudes</title>
@@ -101,7 +101,7 @@
 <main class="ml-64 min-h-screen">
 <!-- TopAppBar Component -->
 <header class="fixed top-0 right-0 w-[calc(100%-16rem)] z-40 bg-[#0e0e0e]/70 backdrop-blur-xl flex justify-between items-center h-20 px-12">
-<link rel="icon" href="img/icon3.png" />
+<link rel="icon" href="img/icon3.webp" />
 <h1 class="font-headline font-semibold text-lg text-on-surface">Solicitudes de Anime</h1>
 <div class="flex items-center gap-8">
 <!-- Search Bar -->

@@ -1,8 +1,9 @@
 (() => {
-  const API_BASE = "api/jikan_proxy.php";
+  const appUrl = window.AniDexShared?.buildAppUrl || ((path = "") => String(path || ""));
+  const API_BASE = appUrl("api/jikan_proxy");
   const cache = {};
   const YEAR_BADGE_PAGES = /series\.php|peliculas\.php/i.test(window.location.pathname || "");
-  const DEFAULT_FALLBACK = "img/fondoanime.png";
+  const DEFAULT_FALLBACK = appUrl("img/fondoanime.webp");
   const INDEX_TITLE_ALIASES = {
     "Frieren: Ms all del final del viaje": "Frieren: Beyond Journey's End",
     "Solo Leveling": "Solo Leveling",
@@ -108,7 +109,7 @@
   async function searchByTitle(title) {
     if (!title) return null;
     const url =
-      "api/jikan_proxy.php?endpoint=" + encodeURIComponent("anime?q=" +
+      `${API_BASE}?endpoint=` + encodeURIComponent("anime?q=" +
       encodeURIComponent(title) +
       "&limit=10&order_by=popularity&sort=asc");
     const json = await (window.AniDexShared?.fetchJson ? window.AniDexShared.fetchJson(url) : fetch(url).then((res) => res.ok ? res.json() : null).catch(() => null));
@@ -154,7 +155,7 @@
     if (movieSearchCache.has(key)) return movieSearchCache.get(key);
     try {
       const url =
-        "api/jikan_proxy.php?endpoint=" + encodeURIComponent("anime?q=" +
+        `${API_BASE}?endpoint=` + encodeURIComponent("anime?q=" +
         encodeURIComponent(query) +
         "&type=movie&limit=10&order_by=popularity&sort=desc");
       let res = await fetch(url);
@@ -205,7 +206,7 @@
 
     try {
       const url =
-        "api/jikan_proxy.php?endpoint=" + encodeURIComponent("anime?q=" +
+        `${API_BASE}?endpoint=` + encodeURIComponent("anime?q=" +
         encodeURIComponent(query) +
         "&limit=10&order_by=popularity&sort=asc");
       const res = await fetch(url);
@@ -227,7 +228,7 @@
     const key = `id:${id}`;
     if (cache[key]) return cache[key];
     try {
-      const res = await fetch(`api/jikan_proxy.php?endpoint=${encodeURIComponent("anime/" + id + "/full")}`);
+      const res = await fetch(`${API_BASE}?endpoint=${encodeURIComponent("anime/" + id + "/full")}`);
       if (!res.ok) return null;
       const json = await res.json();
       const item = json?.data || null;

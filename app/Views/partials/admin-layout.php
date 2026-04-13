@@ -1,4 +1,3 @@
-<template id="admin-sidebar">
   <style data-admin-logo>
     @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&display=swap");
     .logo-badge {
@@ -65,7 +64,7 @@
     <div class="flex flex-col h-full py-8 gap-y-6">
       <div class="px-8 mb-4">
         <a class="logo-badge logo-badge--admin" href="<?= route_path('home') ?>" aria-label="NekoraList">
-          <img src="img/icon3.png" alt="NekoraList" class="logo-icon" />
+          <img src="img/icon3.webp" alt="NekoraList" class="logo-icon" />
           <span class="logo-text">NekoraList</span>
         </a>
       </div>
@@ -97,7 +96,7 @@
           </li>
         </ul>
         <div class="px-6 mt-10">
-          <a href="<?= route_path('add') ?>" class="inline-flex w-full items-center justify-center rounded-full border border-[#9a8cff]/35 bg-gradient-to-r from-[#9a8cff] to-[#74d8ff] py-4 text-xs font-extrabold uppercase tracking-widest text-slate-950 shadow-xl shadow-[#7f8cff]/20 transition-all hover:brightness-110 active:scale-95">A&Ntilde;ADIR NUEVO ANIME</a>
+          <a href="a%C3%B1adir.php" class="inline-flex w-full items-center justify-center rounded-full border border-[#9a8cff]/35 bg-gradient-to-r from-[#9a8cff] to-[#74d8ff] py-4 text-xs font-extrabold uppercase tracking-widest text-slate-950 shadow-xl shadow-[#7f8cff]/20 transition-all hover:brightness-110 active:scale-95">A&Ntilde;ADIR NUEVO ANIME</a>
         </div>
       </nav>
       <div class="px-6 pt-4 border-t border-outline-variant/10">
@@ -108,7 +107,6 @@
       </div>
     </div>
   </aside>
-</template>
 
 
 

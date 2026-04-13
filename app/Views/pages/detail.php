@@ -64,7 +64,7 @@
 </style>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <link rel="icon" href="<?= asset_path('img/icon3.png') ?>" />
+    <link rel="icon" href="<?= asset_path('img/icon3.webp') ?>" />
     <title><?= e(!empty($detailQuery) ? ucwords($detailQuery) : 'Cargando...') ?> | NekoraList</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>

@@ -375,7 +375,7 @@
             .carousel-row { --cards: 1; }
         }
     </style>
-    <link rel="icon" href="img/icon3.png" />
+    <link rel="icon" href="img/icon3.webp" />
 
 
   </head>
@@ -437,7 +437,7 @@
                 </div>
               </div>
               <div data-spotlight-type class="absolute top-4 left-4 z-10 bg-primary/80 text-white text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">Anime</div>
-              <img data-spotlight-rotating="1" alt="Spotlight de temporada" class="w-full h-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04]" data-alt="Escena dramática de batalla anime con efectos de energía brillante" data-fallback="img/fondoanime.png" loading="lazy" referrerpolicy="no-referrer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfEs1IvGWNIZxiSWnnh8wCUr59ea4njuZckziZXqicnQPNvJkan5uFN_-BmFdNvpNSE7c6Gy-mHlJOyMU4hG1QNd2nk5WYUB4_uFh5jJL-K6arAlskDJ_8qihvbrLMvZNDOsSiBXcBUPHNcfenZNrmyKDhpAa0TRP_9gxyxTMIHLtWKcJBfTyyYK2OT7w8mggHKLEv6KE0h3MMHguW46V5ghR79auKbPcZFbiWP4qDRaPBSBDdTGBjWbacwEx2LnRwcBnZnp4l3j-4"/>
+              <img data-spotlight-rotating="1" alt="Spotlight de temporada" class="w-full h-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04]" data-alt="Escena dramática de batalla anime con efectos de energía brillante" data-fallback="img/fondoanime.webp" loading="lazy" referrerpolicy="no-referrer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfEs1IvGWNIZxiSWnnh8wCUr59ea4njuZckziZXqicnQPNvJkan5uFN_-BmFdNvpNSE7c6Gy-mHlJOyMU4hG1QNd2nk5WYUB4_uFh5jJL-K6arAlskDJ_8qihvbrLMvZNDOsSiBXcBUPHNcfenZNrmyKDhpAa0TRP_9gxyxTMIHLtWKcJBfTyyYK2OT7w8mggHKLEv6KE0h3MMHguW46V5ghR79auKbPcZFbiWP4qDRaPBSBDdTGBjWbacwEx2LnRwcBnZnp4l3j-4"/>
               <div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-90"></div>
               <div class="absolute inset-0 bg-primary-container/0 group-hover:bg-primary-container/20 transition-colors"></div>
               <div class="absolute bottom-0 left-0 p-8">
@@ -453,7 +453,7 @@
                 </div>
               </div>
               <div data-spotlight-type class="absolute top-4 left-4 z-10 bg-primary/80 text-white text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">Anime</div>
-              <img data-spotlight-rotating="1" alt="Spotlight de temporada" class="w-full h-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04]" data-alt="Primer plano del rostro expresivo de un personaje anime" data-fallback="img/fondoanime.png" loading="lazy" referrerpolicy="no-referrer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgJ-yNDPcau0sSBkw_cGTC3DcXxC0TQo-0fTUKahdE5DUWtAnr0hWZaO_7WJ1gNB1_h-q_W6GPkuV2mT5Pf_09bEmD4iNptwXJ15fHn_aPbRDzSebKsJAt3Nk2DuquWSC2OQRmssyZjmOVP4z44_mMFUKikgnzhW0yPGnZEZUAq-6sf8Ozv51ef5cqpnYy3s9V9geTRNL41WRE40oFQMp5zgTlJ8dXSOdEkpFMpZoFdCAp2wYDSdJqyEpWS1-JaM960BH1zhV7A813"/>
+              <img data-spotlight-rotating="1" alt="Spotlight de temporada" class="w-full h-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04]" data-alt="Primer plano del rostro expresivo de un personaje anime" data-fallback="img/fondoanime.webp" loading="lazy" referrerpolicy="no-referrer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgJ-yNDPcau0sSBkw_cGTC3DcXxC0TQo-0fTUKahdE5DUWtAnr0hWZaO_7WJ1gNB1_h-q_W6GPkuV2mT5Pf_09bEmD4iNptwXJ15fHn_aPbRDzSebKsJAt3Nk2DuquWSC2OQRmssyZjmOVP4z44_mMFUKikgnzhW0yPGnZEZUAq-6sf8Ozv51ef5cqpnYy3s9V9geTRNL41WRE40oFQMp5zgTlJ8dXSOdEkpFMpZoFdCAp2wYDSdJqyEpWS1-JaM960BH1zhV7A813"/>
               <div class="absolute inset-0 bg-black/40 group-hover:bg-primary-container/20 transition-colors"></div>
               <div class="absolute inset-0 flex items-center justify-center">
                 <h3 class="text-2xl font-bold text-center px-4">The Apothecary Diaries</h3>
@@ -467,7 +467,7 @@
                 </div>
               </div>
               <div data-spotlight-type class="absolute top-4 left-4 z-10 bg-primary/80 text-white text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">Anime</div>
-              <img data-spotlight-rotating="1" alt="Spotlight de temporada" class="w-full h-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04]" data-alt="Bosque anime sereno con plantas m&iacute;sticas luminosas" data-fallback="img/fondoanime.png" loading="lazy" referrerpolicy="no-referrer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2q_skNN7IEXINa_mQLWLtLooGZISRCJFcyFjR3-NhCFoQIV4rVukiI28cqzl7NwA1WRT10f9y_sBVA5KkJuprPzW2QkHsxVtQR7BFHYdKPirCvmU9EAQOC4weVwBfy07uTKoRhP1y13VRDG3hA9igt5f2qH88HGxQ7HJ0NF_FJ80hss_-Tj-Z198bRHpqi85zQe-swEt4fP6Cj4nJcWzWyRxEPOSaQv6kswMt5oDI9hJkaV25CtItXBgjs9EUI-R4wQ4uD4lO2a_z"/>
+              <img data-spotlight-rotating="1" alt="Spotlight de temporada" class="w-full h-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04]" data-alt="Bosque anime sereno con plantas m&iacute;sticas luminosas" data-fallback="img/fondoanime.webp" loading="lazy" referrerpolicy="no-referrer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2q_skNN7IEXINa_mQLWLtLooGZISRCJFcyFjR3-NhCFoQIV4rVukiI28cqzl7NwA1WRT10f9y_sBVA5KkJuprPzW2QkHsxVtQR7BFHYdKPirCvmU9EAQOC4weVwBfy07uTKoRhP1y13VRDG3hA9igt5f2qH88HGxQ7HJ0NF_FJ80hss_-Tj-Z198bRHpqi85zQe-swEt4fP6Cj4nJcWzWyRxEPOSaQv6kswMt5oDI9hJkaV25CtItXBgjs9EUI-R4wQ4uD4lO2a_z"/>
               <div class="absolute inset-0 bg-black/40 group-hover:bg-primary-container/20 transition-colors flex flex-col justify-end p-4">
                 <h4 class="font-bold spotlight-subtitle">Undead Unluck</h4>
               </div>
@@ -480,7 +480,7 @@
                 </div>
               </div>
               <div data-spotlight-type class="absolute top-4 left-4 z-10 bg-primary/80 text-white text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">Anime</div>
-              <img data-spotlight-rotating="1" alt="Spotlight de temporada" class="w-full h-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04]" data-alt="Escena de acción deportiva anime a ritmo frenético" data-fallback="img/fondoanime.png" loading="lazy" referrerpolicy="no-referrer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJ5qAXtvlxTvCn09vDY4wAIFQ0pSixDM-EZ1_G2ikLShfPSIVgjE6BRxgPZEX_LsVn_WN_zHvw3ynIuf2qN3IVoT3ni8MkH0QMTcMI974YwQFJtcJeBMyvGHjDidzk9ppyNm3ysCA4gFA2aUBroWZ3GLFWIcpCLnxsJwGwJtIli6M5os4aZ5oTC_I4oEIhYCuZ55qZQomDSUFsexP297sinHqj50nQvCWlkqo4afO3JcqzF1tr5BSCvjidzOAnoBQUw-a_ATVuBrXKq"/>
+              <img data-spotlight-rotating="1" alt="Spotlight de temporada" class="w-full h-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04]" data-alt="Escena de acción deportiva anime a ritmo frenético" data-fallback="img/fondoanime.webp" loading="lazy" referrerpolicy="no-referrer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJ5qAXtvlxTvCn09vDY4wAIFQ0pSixDM-EZ1_G2ikLShfPSIVgjE6BRxgPZEX_LsVn_WN_zHvw3ynIuf2qN3IVoT3ni8MkH0QMTcMI974YwQFJtcJeBMyvGHjDidzk9ppyNm3ysCA4gFA2aUBroWZ3GLFWIcpCLnxsJwGwJtIli6M5os4aZ5oTC_I4oEIhYCuZ55qZQomDSUFsexP297sinHqj50nQvCWlkqo4afO3JcqzF1tr5BSCvjidzOAnoBQUw-a_ATVuBrXKq"/>
               <div class="absolute inset-0 bg-black/40 group-hover:bg-primary-container/20 transition-colors flex flex-col justify-end p-4">
                 <h4 class="font-bold spotlight-subtitle">Haikyuu!! Final</h4>
               </div>
@@ -1091,7 +1091,7 @@
         img.decoding = "async";
         img.onerror = () => {
           img.onerror = null;
-          img.src = "img/fondoanime.png";
+          img.src = "img/fondoanime.webp";
         };
       });
     };
@@ -1268,7 +1268,7 @@
           card;
         const displayTitle = item?.title_english || item?.title || item?.title_japanese || "";
         if (item) {
-          const src = imageOf(item) || "img/fondoanime.png";
+          const src = imageOf(item) || "img/fondoanime.webp";
           if (img) {
             img.src = src;
             img.alt = displayTitle || img.alt || "Anime";
@@ -1325,7 +1325,7 @@
         const typeLabel = typeKey === "movie" ? "Película" : "Anime";
         pool.push({
           title,
-          image: imageOf(it) || "img/fondoanime.png",
+          image: imageOf(it) || "img/fondoanime.webp",
           score,
           year,
           studio,

@@ -4,7 +4,15 @@
     if (typeof sharedBuilder === "function") return sharedBuilder(path);
     const pathname = window.location.pathname.replace(/\\/g, "/");
     const publicIndex = pathname.toLowerCase().indexOf("/public/");
-    const basePath = publicIndex >= 0 ? pathname.slice(0, publicIndex + 8) : "/";
+    let basePath = "/";
+    if (publicIndex >= 0) {
+        basePath = pathname.slice(0, publicIndex + 8);
+    } else {
+        const parts = pathname.split('/');
+        if (parts.length > 1) {
+            basePath = "/" + parts[1] + "/";
+        }
+    }
     const cleanPath = String(path || "").replace(/^\/+/, "");
     return cleanPath ? `${basePath}${cleanPath}` : basePath.replace(/\/$/, "");
   };
@@ -12,8 +20,8 @@
   const STORAGE_KEY = "anidex_lang";
   const CACHE_KEY = "anidex_en_cache_v1";
   const LANGS = {
-    es: { src: buildAssetPath("img/espana.png"), alt: "ES" },
-    en: { src: buildAssetPath("img/reino-unido.png"), alt: "EN" }
+    es: { src: buildAssetPath("img/espana.webp"), alt: "ES" },
+    en: { src: buildAssetPath("img/reino-unido.webp"), alt: "EN" }
   };
 
   const fixedMap = new Map([

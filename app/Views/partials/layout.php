@@ -97,7 +97,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    background-image: url("<?= asset_path('img/footer.png') ?>");
+    background-image: url("<?= asset_path('img/footer.webp') ?>");
     background-repeat: no-repeat;
     background-size: 100% auto;
     background-position: center bottom;
@@ -585,10 +585,10 @@
 
 <!-- Navbar Component -->
 <template id="layout-header">
-  <nav class="fixed top-0 w-full z-50 bg-neutral-950/70 backdrop-blur-xl shadow-[0px_20px_40px_rgba(0,0,0,0.4)] transition-all duration-300">
+  <nav class="fixed top-0 w-full z-[1000] bg-neutral-950/70 backdrop-blur-xl shadow-[0px_20px_40px_rgba(0,0,0,0.4)] transition-all duration-300">
     <div class="flex items-center justify-between px-5 h-[5.6rem] pt-2 w-full font-['Manrope'] antialiased">
       <a class="logo-badge" href="<?= route_path('home') ?>" aria-label="NekoraList">
-        <img src="<?= asset_path('img/icon3.png') ?>" alt="NekoraList" class="logo-icon" />
+        <img src="<?= asset_path('img/icon3.webp') ?>" alt="NekoraList" class="logo-icon" />
         <span class="logo-text-stack">
           <span class="logo-text">NekoraList</span>
           <span class="logo-tagline">Tu portal a infinitas historias de anime</span>
@@ -605,9 +605,13 @@
         <div class="hidden lg:flex items-center bg-surface-container-high rounded-full px-4 py-2 w-36 group focus-within:ring-1 focus-within:ring-primary/30 transition-all">
           <span class="material-symbols-outlined text-violet-400 text-sm">search</span>
           <input
+            id="layout-search-input"
+            data-header-search="1"
             class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-on-surface-variant/50"
             placeholder="Buscar..."
             type="text"
+            autocomplete="off"
+            spellcheck="false"
           />
         </div>
 <div class="relative">
@@ -618,7 +622,7 @@
             aria-expanded="false"
             data-lang-toggle
           >
-            <img src="<?= asset_path('img/espana.png') ?>" alt="ES" class="w-4 h-4" />
+            <img src="<?= asset_path('img/espana.webp') ?>" alt="ES" class="w-4 h-4" />
             <span class="material-symbols-outlined text-[16px]">expand_more</span>
           </button>
           <div
@@ -632,7 +636,7 @@
               data-lang="es"
               role="menuitem"
             >
-              <img src="<?= asset_path('img/espana.png') ?>" alt="ES" class="w-4 h-4" /><span class="uppercase tracking-widest">ES</span>
+              <img src="<?= asset_path('img/espana.webp') ?>" alt="ES" class="w-4 h-4" /><span class="uppercase tracking-widest">ES</span>
             </button>
             <button
               class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold text-zinc-200 hover:bg-zinc-700 hover:text-white"
@@ -640,7 +644,7 @@
               data-lang="en"
               role="menuitem"
             >
-              <img src="<?= asset_path('img/reino-unido.png') ?>" alt="EN" class="w-4 h-4" /><span class="uppercase tracking-widest">EN</span>
+              <img src="<?= asset_path('img/reino-unido.webp') ?>" alt="EN" class="w-4 h-4" /><span class="uppercase tracking-widest">EN</span>
             </button>
           </div>
         </div>
@@ -736,7 +740,7 @@
     <!-- Secciones Premium/Admin Ocultas por defecto -->
     <div data-premium-only class="mt-2 pt-2 border-t border-white/5 flex flex-col gap-1 hidden">
       <div class="text-[10px] font-bold text-amber-400 uppercase tracking-[0.2em] px-3 py-1">Premium Perks</div>
-      <a href="premium.php" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-amber-200 hover:text-white hover:bg-amber-500/10 transition-all">
+      <a href="<?= route_path('payment') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-amber-200 hover:text-white hover:bg-amber-500/10 transition-all">
         <span class="material-symbols-outlined text-lg">workspace_premium</span>
         Beneficios Gold
       </a>
@@ -765,34 +769,34 @@
     <div class="footer-content w-full px-6 md:px-12 py-14">
      <div class="footer-side-left">
       <button type="button" data-external-url="https://discord.com">
-        <img src="<?= asset_path('img/discord.png') ?>" alt="Discord" class="footer-icon" />
+        <img src="<?= asset_path('img/discord.webp') ?>" alt="Discord" class="footer-icon" />
       </button>
       <div class="footer-side-row">
           <button type="button" data-external-url="https://facebook.com">
-            <img src="<?= asset_path('img/facebook.png') ?>" alt="Facebook" class="footer-icon" />
+            <img src="<?= asset_path('img/facebook.webp') ?>" alt="Facebook" class="footer-icon" />
           </button>
           <button type="button" data-external-url="https://instagram.com">
-            <img src="<?= asset_path('img/instagram.png') ?>" alt="Instagram" class="footer-icon" />
+            <img src="<?= asset_path('img/instagram.webp') ?>" alt="Instagram" class="footer-icon" />
           </button>
         </div>
       </div>
       <div class="footer-side-right">
         <button type="button" data-external-url="https://www.youtube.com">
-          <img src="<?= asset_path('img/y.png') ?>" alt="YouTube" class="footer-icon" />
+          <img src="<?= asset_path('img/y.webp') ?>" alt="YouTube" class="footer-icon" />
         </button>
         <div class="footer-side-row">
           <button type="button" data-external-url="https://www.tiktok.com">
-            <img src="<?= asset_path('img/tt.png') ?>" alt="TikTok" class="footer-icon" />
+            <img src="<?= asset_path('img/tt.webp') ?>" alt="TikTok" class="footer-icon" />
           </button>
           <button type="button" data-external-url="https://twitter.com">
-            <img src="<?= asset_path('img/x.png') ?>" alt="X" class="footer-icon" />
+            <img src="<?= asset_path('img/x.webp') ?>" alt="X" class="footer-icon" />
           </button>
         </div>
       </div> 
 <div class="footer-center flex flex-col items-center text-center gap-6">
         <div class="footer-brand-stack flex flex-col items-center gap-2">
           <a class="footer-brand inline-flex items-center gap-3" href="<?= route_path('home') ?>" aria-label="NekoraList">
-            <img src="<?= asset_path('img/icon3.png') ?>" alt="NekoraList" class="footer-logo" />
+            <img src="<?= asset_path('img/icon3.webp') ?>" alt="NekoraList" class="footer-logo" />
             <span class="footer-name">NekoraList</span>
           </a>
           <div class="footer-tagline">Tu portal a infinitas historias de anime</div>

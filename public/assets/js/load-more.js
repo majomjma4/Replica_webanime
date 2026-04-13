@@ -20,7 +20,7 @@
   let loading = false;
   const seenTitles = new Set();
   const seenIds = new Set();
-  const DEFAULT_FALLBACK = "img/fondoanime.png";
+  const DEFAULT_FALLBACK = "img/fondoanime.webp";
   const hoverCapable = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   const previewCache = new Map();
   const previewPending = new Map();

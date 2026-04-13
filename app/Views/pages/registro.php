@@ -81,7 +81,7 @@
     .auth-bg {
       background-image:
         linear-gradient(to bottom, rgba(14,14,14,0.75), rgba(14,14,14,0.95)),
-        url('img/fondoanime.png'),
+        url('img/fondoanime.webp'),
         url(https://lh3.googleusercontent.com/aida-public/AB6AXuBLuWyRtfEWU2y5PdTv2Ss_SZbPEs9yQc0AmxQP3e_PJrxazRMc0Th_482PYo0XjqXN6GK6GFZT8lM5Ex_K1hChX0SjfDPp0lTWdJ41HPTrQAVhOi8yL_G_ginRX5Kiy9HhmlSHK_dDdQWqsNBxVUuw1zzDMVpdhxt194d7Qwq5_CP_9jSpHSEJFBEQgMlxmp-x-Vy92WQ7SxVS48_rOEeP3cVbpEyD_V9kR0CLyoQgTjXTHYuJIDxGfzeq0VkKiUXGrnWao-XxfVcG);
       background-size: cover;
       background-position: center;
@@ -89,7 +89,7 @@
     .auth-page {
       background-image:
         linear-gradient(to bottom, rgba(14,14,14,0.55), rgba(14,14,14,0.85)),
-        url('img/fondoanime.png'),
+        url('img/fondoanime.webp'),
         url(https://lh3.googleusercontent.com/aida-public/AB6AXuBLuWyRtfEWU2y5PdTv2Ss_SZbPEs9yQc0AmxQP3e_PJrxazRMc0Th_482PYo0XjqXN6GK6GFZT8lM5Ex_K1hChX0SjfDPp0lTWdJ41HPTrQAVhOi8yL_G_ginRX5Kiy9HhmlSHK_dDdQWqsNBxVUuw1zzDMVpdhxt194d7Qwq5_CP_9jSpHSEJFBEQgMlxmp-x-Vy92WQ7SxVS48_rOEeP3cVbpEyD_V9kR0CLyoQgTjXTHYuJIDxGfzeq0VkKiUXGrnWao-XxfVcG);
       background-size: cover;
       background-position: center;
@@ -131,7 +131,7 @@
       caret-color: #e7e5e4;
     }
     </style>
-    <link rel="icon" href="img/icon3.png" />
+    <link rel="icon" href="img/icon3.webp" />
   </head>
   <body class="bg-background text-on-background font-body min-h-screen flex flex-col auth-page overflow-hidden">
     <div class="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-6 py-6 pointer-events-none">

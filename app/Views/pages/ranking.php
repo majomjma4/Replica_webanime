@@ -260,7 +260,7 @@
       grid-column: 1 / -1;
     }
   </style>
-  <link rel="icon" href="img/icon3.png" />
+  <link rel="icon" href="img/icon3.webp" />
 </head>
 
 <body class="bg-zinc-950 text-zinc-100 font-['Inter']">
