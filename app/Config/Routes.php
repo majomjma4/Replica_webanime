@@ -38,9 +38,40 @@ $routes->match(['get','post','options'], 'api/requests.php', '\\App\\Controllers
 $routes->match(['get','post','options'], 'api/users', '\\App\\Controllers\\Api\\Users::handle');
 $routes->match(['get','post','options'], 'api/users.php', '\\App\\Controllers\\Api\\Users::handle');
 
-// Pages
-$routes->get('detail', '\\App\\Controllers\\Pages::detail');
-$routes->get('detail/(:segment)', '\\App\\Controllers\\Pages::detail/$1');
+// Anime Controller
+$routes->get('series', '\\App\\Controllers\\AnimeController::series');
+$routes->get('peliculas', '\\App\\Controllers\\AnimeController::peliculas');
+$routes->get('detail', '\\App\\Controllers\\AnimeController::detail');
+$routes->get('detail/(:segment)', '\\App\\Controllers\\AnimeController::detail/$1');
 
-$routes->get('(:segment)', '\\App\\Controllers\\Pages::show/$1');
-$routes->get('(:segment).php', '\\App\\Controllers\\Pages::show/$1');
+// Home Controller (Destacados y Ranking)
+$routes->get('destacados', '\\App\\Controllers\\Home::destacados');
+$routes->get('ranking', '\\App\\Controllers\\Home::ranking');
+
+// User Controller
+$routes->get('registro', '\\App\\Controllers\\UserController::registro');
+$routes->get('ingresar', '\\App\\Controllers\\UserController::ingresar');
+
+$routes->group('', ['filter' => 'auth'], function($routes) {
+    $routes->get('user', '\\App\\Controllers\\UserController::perfil');
+    $routes->get('pago', '\\App\\Controllers\\UserController::pago');
+});
+
+// Admin Controller
+$routes->group('admin_panel', ['filter' => 'admin'], function($routes) {
+    $routes->get('/', '\\App\\Controllers\\AdminController::dashboard');
+    $routes->get('admin', '\\App\\Controllers\\AdminController::dashboard');
+    $routes->get('gestion', '\\App\\Controllers\\AdminController::gestion');
+    $routes->get('gesus', '\\App\\Controllers\\AdminController::gesus');
+    $routes->get('gescom', '\\App\\Controllers\\AdminController::gescom');
+    $routes->get('anadir', '\\App\\Controllers\\AdminController::anadir');
+});
+
+// Fallbacks legacy without admin prefix (to avoid breaking current nav, but filtered)
+$routes->group('', ['filter' => 'admin'], function($routes) {
+    $routes->get('admin', '\\App\\Controllers\\AdminController::dashboard');
+    $routes->get('gestion', '\\App\\Controllers\\AdminController::gestion');
+    $routes->get('gesus', '\\App\\Controllers\\AdminController::gesus');
+    $routes->get('gescom', '\\App\\Controllers\\AdminController::gescom');
+    $routes->get('anadir', '\\App\\Controllers\\AdminController::anadir');
+});
