@@ -371,6 +371,30 @@ const AniDexDetailDataBoot = () => {
       addMap(preTitle);
       localStorage.setItem(mapKey, JSON.stringify(map));
     } catch {}
+    
+    // 1. PERSISTENCIA INMEDIATA (FASE 1: Datos Básicos)
+    if (full && full.mal_id) {
+      const saveUrl = appUrl("api/save_anime");
+      console.log("NekoraDetail: Enviando Fase 1 (Persistencia Rápida)...");
+      try {
+        const res1 = await window.fetch(saveUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(full)
+        }).then(r => r.json());
+
+        if (res1.success) {
+          console.log(`NekoraDetail: Fase 1 [${res1.action || 'insert'}] exitosa. DB_ID: ${res1.id}`);
+          selectedId = Number(res1.mal_id || selectedId);
+        } else {
+          console.warn("NekoraDetail: Fase 1 no reportó éxito:", res1.error || res1.message);
+        }
+      } catch (e) {
+        console.error("NekoraDetail: Error crítico en Fase 1:", e);
+      }
+    }
+
+    // 2. CARGA PROFUNDA (FASE 2: Personajes, Videos, Fotos)
     const [chars, vids, pics] = await Promise.all([
       isLocal ? Promise.resolve(full.characters || []) : byId(selectedId, "characters").then((data) => data || []),
       isLocal ? Promise.resolve(full.videos || {}) : byId(selectedId, "videos").then((data) => data || {}),
@@ -384,12 +408,26 @@ const AniDexDetailDataBoot = () => {
         videos: vids,
         pictures: pics
       };
-      fetch(appUrl("api/save_anime"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(deepData)
-      }).catch(() => {});
+      
+      const saveUrl = appUrl("api/save_anime");
+      console.log("NekoraDetail: Enviando Fase 2 (Persistencia Profunda)...");
+      try {
+        const res2 = await window.fetch(saveUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(deepData)
+        }).then(r => r.json());
+
+        if (res2.success) {
+          console.log(`NekoraDetail: Fase 2 [${res2.action || 'update'}] exitosa. DB_ID: ${res2.id}`);
+        } else {
+          console.error("NekoraDetail: Error en Fase 2:", res2.error || res2.message);
+        }
+      } catch (err) {
+        console.error("NekoraDetail: Fallo de red en Fase 2:", err);
+      }
     }
+    
     const forceTitles = [
       "Jujutsu Kaisen: Shimetsu Kaiyuu - Zenpen"
     ];

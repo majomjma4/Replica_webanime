@@ -127,9 +127,10 @@
   const translateAutoToEs = async (text) => {
     const raw = String(text || "").trim();
     if (!raw) return "";
+    const safeText = raw.substring(0, 1500); // Prevención de error HTTP 400
     const url =
       "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=es&dt=t&q=" +
-      encodeURIComponent(raw);
+      encodeURIComponent(safeText);
     const data = await fetchJson(url, {}, 1, 700);
     const out = (data?.[0] || []).map((row) => row?.[0] || "").join("").trim();
     return out || raw;

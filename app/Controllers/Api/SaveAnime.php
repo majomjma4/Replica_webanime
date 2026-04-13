@@ -21,9 +21,10 @@ final class SaveAnime extends BaseController
 
         $db = \Config\Database::connect();
 
-        $malId = (int) $data['mal_id'];
-        $title = trim((string) ($data['title_english'] ?? $data['title'] ?? 'Unknown'));
-        $rating = (string) ($data['rating'] ?? '');
+        $malId = (int) ($data['mal_id'] ?? 0);
+        $title = trim((string) ($data['title'] ?? $data['titulo'] ?? 'Unknown'));
+        $titleEnglish = trim((string) ($data['title_english'] ?? $data['titulo_ingles'] ?? ''));
+        $rating = (string) ($data['rating'] ?? $data['clasificacion'] ?? '');
         
         if (stripos($rating, 'Rx') !== false || stripos($rating, 'Hentai') !== false || stripos($rating, 'Erotica') !== false) {
             return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Contenido restringido (+18) no permitido.']);
@@ -51,7 +52,7 @@ final class SaveAnime extends BaseController
             }
         }
 
-        $statusRaw = trim((string) ($data['status'] ?? 'Unknown'));
+        $statusRaw = trim((string) ($data['status'] ?? $data['estado'] ?? 'Unknown'));
         $statusLower = strtolower($statusRaw);
         $status = match ($statusLower) {
             'finished airing' => 'Finalizado',
@@ -60,16 +61,15 @@ final class SaveAnime extends BaseController
             default => $statusRaw,
         };
 
-        $episodes = isset($data['episodes']) ? (int) $data['episodes'] : 0;
-        $season = (string) ($data['season'] ?? 'Unknown');
-        $year = isset($data['year']) ? (int) $data['year'] : (int) ($data['aired']['prop']['from']['year'] ?? 0);
-        $synopsis = (string) ($data['synopsis'] ?? '');
-        $imageUrl = (string) ($data['images']['jpg']['large_image_url'] ?? $data['images']['jpg']['image_url'] ?? '');
-        $score = isset($data['score']) ? (float) $data['score'] : 0.0;
-        $titleEnglish = trim((string) ($data['title_english'] ?? ''));
-        $classification = trim((string) ($data['rating'] ?? ''));
-        $trailerUrl = (string) ($data['trailer']['url'] ?? '');
-        $type = (string) ($data['type'] ?? 'TV');
+        $episodes = isset($data['episodes']) ? (int) $data['episodes'] : (isset($data['episodios']) ? (int) $data['episodios'] : 0);
+        $season = (string) ($data['season'] ?? $data['temporada'] ?? 'Unknown');
+        $year = isset($data['year']) ? (int) $data['year'] : (isset($data['anio']) ? (int) $data['anio'] : (int) ($data['aired']['prop']['from']['year'] ?? 0));
+        $synopsis = (string) ($data['synopsis'] ?? $data['sinopsis'] ?? '');
+        $imageUrl = (string) ($data['images']['jpg']['large_image_url'] ?? $data['images']['jpg']['image_url'] ?? $data['imagen_url'] ?? '');
+        $score = isset($data['score']) ? (float) $data['score'] : (isset($data['puntuacion']) ? (float) $data['puntuacion'] : 0.0);
+        $classification = trim((string) ($data['rating'] ?? $data['clasificacion'] ?? ''));
+        $trailerUrl = (string) ($data['trailer']['url'] ?? $data['trailer_url'] ?? '');
+        $type = (string) ($data['type'] ?? $data['tipo'] ?? 'TV');
         $studio = implode(', ', $studioNames);
 
         try {
@@ -92,19 +92,24 @@ final class SaveAnime extends BaseController
                 'puntuacion' => $score
             ];
 
+            $action = 'none';
             if ($existingId <= 0) {
                 $animeData['activo'] = 1;
                 $animeData['creado_en'] = date('Y-m-d H:i:s');
                 $db->table('anime')->insert($animeData);
                 $animeId = $db->insertID();
+                if (!$animeId || $animeId == 0) throw new \Exception("Error al obtener ID de inserción para MAL " . $malId);
+                $action = 'insert';
             } else {
                 $animeId = $existingId;
                 $db->table('anime')->where('id', $animeId)->update($animeData);
                 $db->table('anime_generos')->where('anime_id', $animeId)->delete();
+                $action = 'update';
             }
 
-            if (!empty($data['genres']) && is_array($data['genres'])) {
-                foreach ($data['genres'] as $genre) {
+            $generos = $data['genres'] ?? $data['generos'] ?? [];
+            if (!empty($generos) && is_array($generos)) {
+                foreach ($generos as $genre) {
                     $genreName = trim((string) ($genre['name'] ?? ''));
                     if ($genreName === '') {
                         continue;
@@ -123,7 +128,7 @@ final class SaveAnime extends BaseController
                 }
             }
 
-            if ($db->tableExists('anime_characters') && isset($data['characters']) && is_array($data['characters'])) {
+            if ($animeId && $db->tableExists('anime_characters') && isset($data['characters']) && is_array($data['characters'])) {
                 $db->table('anime_characters')->where('anime_id', $animeId)->delete();
                 foreach (array_slice($data['characters'], 0, 10) as $character) {
                     if (empty($character['character']['mal_id'])) {
@@ -139,7 +144,7 @@ final class SaveAnime extends BaseController
                 }
             }
 
-            if ($db->tableExists('anime_pictures') && isset($data['pictures']) && is_array($data['pictures'])) {
+            if ($animeId && $db->tableExists('anime_pictures') && isset($data['pictures']) && is_array($data['pictures'])) {
                 $db->table('anime_pictures')->where('anime_id', $animeId)->delete();
                 foreach ($data['pictures'] as $picture) {
                     $pictureUrl = (string) ($picture['jpg']['large_image_url'] ?? $picture['jpg']['image_url'] ?? '');
@@ -152,7 +157,7 @@ final class SaveAnime extends BaseController
                 }
             }
 
-            if ($db->tableExists('anime_videos') && !empty($data['videos']['promo']) && is_array($data['videos']['promo'])) {
+            if ($animeId && $db->tableExists('anime_videos') && !empty($data['videos']['promo']) && is_array($data['videos']['promo'])) {
                 $db->table('anime_videos')->where('anime_id', $animeId)->delete();
                 foreach ($data['videos']['promo'] as $video) {
                     $youtubeId = (string) ($video['trailer']['youtube_id'] ?? '');
@@ -169,7 +174,7 @@ final class SaveAnime extends BaseController
                 }
             }
 
-            if ($db->tableExists('anime_episodes') && isset($data['episodes_data']) && is_array($data['episodes_data'])) {
+            if ($animeId && $db->tableExists('anime_episodes') && isset($data['episodes_data']) && is_array($data['episodes_data'])) {
                 $db->table('anime_episodes')->where('anime_id', $animeId)->delete();
                 foreach ($data['episodes_data'] as $episode) {
                     $episodeNumber = (int) ($episode['mal_id'] ?? $episode['episode_number'] ?? 0);
@@ -197,7 +202,7 @@ final class SaveAnime extends BaseController
                 return $this->response->setStatusCode(500)->setJSON(['success' => false, 'error' => 'Error de transaccion en base de datos.']);
             }
 
-            return $this->response->setJSON(['success' => true, 'message' => 'Inserted new anime with deep data']);
+            return $this->response->setJSON(['success' => true, 'message' => 'Anime processed successfully', 'id' => $animeId, 'action' => $action]);
             
         } catch (\Exception $exception) {
             return $this->response->setStatusCode(500)->setJSON(['success' => false, 'error' => $exception->getMessage()]);
