@@ -392,7 +392,7 @@
           <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background/95 via-background/60 to-transparent"></div>
           <div class="absolute inset-0 bg-gradient-to-r from-background via-transparent to-transparent"></div>
         </div>
-          <div class="relative z-10 px-8 md:px-16 pb-[86px] w-full md:w-1/2 max-w-none text-left translate-y-[60px]">
+          <div class="relative z-10 px-8 md:px-16 pb-[86px] w-full md:w-1/2 max-w-none text-left translate-y-[70px]">
           <div class="flex items-center gap-2 mb-4">
             <span class="bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-violet-500 text-white px-4 py-1.5 rounded-full text-sm font-extrabold tracking-widest uppercase shadow-[0_0_18px_rgba(34,211,238,0.55)]">Lo m&aacute;s nuevo</span>
             <span id="hero-meta" class="text-on-surface-variant text-sm font-medium"> 28 Episodios</span>
