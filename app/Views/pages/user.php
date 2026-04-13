@@ -627,7 +627,7 @@
   </main>
 
   <!-- Avatar Picker Modal -->
-  <div id="avatar-modal" class="fixed inset-0 z-[80] hidden">
+  <div id="avatar-modal" class="fixed inset-0 z-[2000] hidden">
     <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" data-avatar-close></div>
     <div class="relative mx-auto mt-20 sm:mt-28 w-[92%] sm:w-[86%] max-w-[580px] rounded-lg bg-surface-container-high p-4 shadow-2xl">
       <div class="flex items-center justify-between mb-4">
@@ -644,7 +644,7 @@
   </div>
 
   <!-- Edit Profile Modal -->
-  <div id="profile-modal" class="fixed inset-0 z-[500] hidden flex items-center justify-center px-4">
+  <div id="profile-modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center px-4">
     <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" data-profile-close></div>
     <div
       class="relative w-full max-w-[29rem] rounded-2xl border border-white/10 bg-surface-container-high p-5 shadow-[0_24px_60px_rgba(0,0,0,0.5)]">
@@ -736,7 +736,7 @@
   </div>
 
   <!-- Request Title Modal -->
-  <div id="request-title-modal" class="fixed inset-0 z-[500] hidden flex items-center justify-center">
+  <div id="request-title-modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" data-request-close></div>
     <div
       class="relative w-[92%] sm:w-[70%] max-w-[340px] rounded-2xl border border-white/10 bg-surface-container-high p-5 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
@@ -773,7 +773,7 @@
 
 
   <!-- Request Toast -->
-  <div id="request-toast" class="fixed inset-0 z-[90] hidden items-center justify-center">
+  <div id="request-toast" class="fixed inset-0 z-[2000] hidden items-center justify-center">
     <div
       class="rounded-full border border-white/10 bg-surface-container-high/90 px-6 py-3 text-sm font-semibold text-on-surface shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
       T&iacute;tulo solicitado
@@ -781,7 +781,7 @@
   </div>
 
   <!-- Logout Confirm Modal -->
-  <div id="logout-confirm" class="fixed inset-0 z-[500] hidden items-center justify-center">
+  <div id="logout-confirm" class="fixed inset-0 z-[2000] hidden items-center justify-center">
     <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" data-logout-close onclick="var m=document.getElementById('logout-confirm'); if(m){m.classList.add('hidden'); m.classList.remove('flex');} return false;"></div>
     <div
       class="relative mx-auto w-[92%] sm:w-[86%] max-w-xs rounded-2xl border border-white/10 bg-surface-container-high p-5 text-center shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
@@ -872,11 +872,11 @@
   <!-- Footer Component -->
   <div data-layout="footer"></div>
   <script src="<?= asset_path('assets/js/shared-utils.js?v=1') ?>"></script>
-  <script src="<?= asset_path('assets/js/layout.js?v=theme3') ?>"></script>
+  <script src="<?= asset_path('assets/js/layout.js?v=theme1') ?>"></script>
   <script src="<?= asset_path('assets/js/i18n.js') ?>"></script>
-  <script src="<?= asset_path('assets/js/title-images.js?v=5') ?>"></script>
-  <script src="<?= asset_path('assets/js/search.js?v=popular4') ?>"></script>
-  <script src="<?= asset_path('assets/js/favorites.js?v=5') ?>"></script>
+  <script src="<?= asset_path('assets/js/title-images.js?v=3') ?>"></script>
+  <script src="<?= asset_path('assets/js/search.js?v=popular7') ?>"></script>
+  <script src="<?= asset_path('assets/js/favorites.js?v=4') ?>"></script>
   <script src="<?= asset_path('assets/js/detail-links.js?v=6') ?>"></script>
   <script src="<?= asset_path('assets/js/user-page.js?v=2') ?>"></script>
   <script src="<?= asset_path('assets/js/user-page-rescue.js?v=10') ?>"></script>

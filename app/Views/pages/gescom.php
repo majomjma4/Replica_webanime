@@ -51,9 +51,11 @@
         body { background-color: #0e0e0e; color: #e7e5e4; font-family: 'Inter', sans-serif; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
     </style>
+<script src="assets/js/shared-utils.js?v=20260408a" defer></script>
+<script src="assets/js/admin-layout.js?v=20260330a" defer></script>
 </head>
 <body class="bg-background text-on-background selection:bg-primary-container selection:text-on-primary-container" data-admin-page="comments">
-<div data-admin-sidebar></div>
+<?php include __DIR__ . '/../partials/admin-layout.php'; ?>
 <main class="ml-64 pt-28 px-12 pb-12 min-h-screen">
 <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 xl:grid-cols-4">
 <div class="bg-surface-container-low p-6 rounded-lg border-l-4 border-primary shadow-lg">
@@ -664,7 +666,7 @@
     }
 
     try {
-      const res = await fetch('api/comments.php?action=list');
+      const res = await fetch("<?= asset_path('api/comments') ?>?action=list");
       const data = await res.json();
       if (data.success) {
         allComments = Array.isArray(data.data) ? data.data : [];
@@ -731,7 +733,7 @@
         if (!reviewTarget) return;
 
         try {
-          const res = await fetch('api/comments.php?action=moderate', {
+          const res = await fetch("<?= asset_path('api/comments') ?>?action=moderate", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
@@ -743,7 +745,7 @@
             return;
           }
 
-          const refreshed = await fetch('api/comments.php?action=list', { credentials: 'same-origin' });
+          const refreshed = await fetch("<?= asset_path('api/comments') ?>?action=list", { credentials: 'same-origin' });
           const refreshedData = await refreshed.json();
           allComments = Array.isArray(refreshedData.data) ? refreshedData.data : allComments;
           closeReviewModal();
@@ -773,7 +775,7 @@
         if (!deleteTarget) return;
 
         try {
-          const res = await fetch('api/comments.php?action=moderate', {
+          const res = await fetch("<?= asset_path('api/comments') ?>?action=moderate", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
@@ -785,7 +787,7 @@
             return;
           }
 
-          const refreshed = await fetch('api/comments.php?action=list', { credentials: 'same-origin' });
+          const refreshed = await fetch("<?= asset_path('api/comments') ?>?action=list", { credentials: 'same-origin' });
           const refreshedData = await refreshed.json();
           allComments = Array.isArray(refreshedData.data) ? refreshedData.data : allComments;
           closeDeleteModal();
@@ -797,7 +799,7 @@
     });
   })();
 </script>
-<script src="assets/js/admin-layout.js?v=20260330a"></script>
+
 </body></html>
 
 

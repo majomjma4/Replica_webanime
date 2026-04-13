@@ -1,4 +1,11 @@
 (function () {
+  const appUrl = window.AniDexShared?.buildAppUrl || ((path = "") => String(path || ""));
+  const buildDetailUrl = window.AniDexShared?.buildDetailUrl || ((malId = "", title = "") => {
+    const numericId = String(malId || "").trim();
+    if (/^\d+$/.test(numericId)) return appUrl(`detail/${encodeURIComponent(numericId)}`);
+    const cleanTitle = String(title || "").trim();
+    return cleanTitle ? appUrl(`detail?q=${encodeURIComponent(cleanTitle)}`) : appUrl("detail");
+  });
   let GENRE_OPTIONS = window.DB_GENRES || [
     "Acci\u00f3n",
     "Aventura",
@@ -1364,6 +1371,30 @@
 
       toggleEmptyState(visible.length);
 
+      // METODOS DE SKELETON
+      function ensureGridSkeletons(count) {
+        const host = grid || document.querySelector("[data-anime-card]")?.parentElement;
+        if (!host) return;
+        host.querySelectorAll(".skeleton-loader").forEach(e => e.remove());
+        for (let i = 0; i < count; i++) {
+          const skel = document.createElement("article");
+          skel.className = "group rounded-lg bg-surface-container-low p-4 animate-pulse skeleton-loader";
+          skel.innerHTML = `
+            <div class="relative aspect-[2/3] overflow-hidden rounded-lg bg-surface-container-highest/40"></div>
+            <div class="space-y-2 mt-3">
+              <div class="h-5 bg-surface-container-highest/40 rounded w-full"></div>
+              <div class="h-4 bg-surface-container-highest/40 rounded w-2/3"></div>
+            </div>
+          `;
+          host.appendChild(skel);
+        }
+      }
+
+      function clearGridSkeletons() {
+        const host = grid || document.querySelector("[data-anime-card]")?.parentElement;
+        if (host) host.querySelectorAll(".skeleton-loader").forEach(e => e.remove());
+      }
+
       // FALLBACK: Si no hay resultados locales y hay texto de búsqueda, buscar en Jikan
       if (visible.length === 0 && q && q.length > 2) {
         if (!state.isFetchingGlobal) {
@@ -1372,26 +1403,35 @@
           const mediaType = isMoviesPage ? "movie" : "tv";
           
           if (emptyBox) {
-            const msg = emptyBox.querySelector("p");
-            if (msg) msg.textContent = "Buscando en el cat?logo global...";
+            emptyBox.style.display = "none";
           }
+          
+          ensureGridSkeletons(6); // Mostrar skeletons de busqueda
 
-          fetch(`api/jikan_proxy.php?endpoint=${encodeURIComponent(`anime?q=${encodeURIComponent(state.search)}&type=${mediaType}&limit=12&order_by=popularity&sort=asc`)}`)
+          fetch(`${appUrl("api/jikan_proxy")}?endpoint=${encodeURIComponent(`anime?q=${encodeURIComponent(state.search)}&type=${mediaType}&limit=12&order_by=popularity&sort=asc&sfw=1`)}`)
             .then(r => r.ok ? r.json() : null)
             .then(json => {
               state.isFetchingGlobal = false;
+              clearGridSkeletons();
               if (json && json.data && json.data.length > 0) {
                 hydrateCardsWithResults(json.data, mediaType);
               } else {
-                 if (emptyBox && emptyBox.querySelector("p")) {
-                   emptyBox.querySelector("p").textContent = "No se encontraron resultados en el cat?logo global.";
+                 if (emptyBox) {
+                   emptyBox.style.display = "";
+                   if (emptyBox.querySelector("p")) {
+                     emptyBox.querySelector("p").textContent = "No se encontraron resultados en el cat\u00e1logo global.";
+                   }
                  }
               }
             })
             .catch(() => {
               state.isFetchingGlobal = false;
+              clearGridSkeletons();
+              if (emptyBox) emptyBox.style.display = "";
             });
         }
+      } else {
+         clearGridSkeletons();
       }
 
       const filtersActive =
@@ -1440,8 +1480,8 @@
 
     function canonicalStatus(v) {
       const n = normalize(v);
-      if (n.includes("emision") || n.includes("airing")) return "En emisión";
-      if (n.includes("upcoming") || n.includes("proxim")) return "Próximamente";
+      if (n.includes("emision") || n.includes("airing")) return "En emisi\u00f3n";
+      if (n.includes("upcoming") || n.includes("proxim")) return "Pr\u00f3ximamente";
       if (n.includes("finalizada") || n.includes("finalizado") || n.includes("final") || n.includes("finished")) return "Finalizado";
       if (n.includes("cancelada") || n.includes("cancelado") || n.includes("cancel")) return "Cancelado";
       if (n.includes("hiatus") || n.includes("paus")) return "Pausado";
@@ -1462,7 +1502,8 @@
 
         const title = item.title_english || item.title || "Anime";
       const normalizedTitle = normalize(title);
-      if (normalizedTitle.includes("does it count if you lose your innocence to an android") || normalizedTitle.includes("does it count if") || normalizedTitle.includes("futanari")) return null;
+      const blacklist = ["hentai", "futanari", "dick", "pussy", "sex", "porn", "cock", "blowjob", "does it count if"];
+      if (blacklist.some(word => normalizedTitle.includes(word))) return null;
         const img = item.images?.webp?.large_image_url || item.images?.jpg?.large_image_url || "";
         const year = item.year || (item.aired?.prop?.from?.year) || "";
         const score = item.score || item.scored || 0;
@@ -1515,7 +1556,7 @@
 
         const link = card.closest("a") || card.querySelector("a") || card.querySelector("a");
         if (link) {
-          link.href = `detail?mal_id=${item.mal_id}&q=${encodeURIComponent(title)}`;
+          link.href = buildDetailUrl(item.mal_id, title);
           link.ariaLabel = title;
         }
       });
@@ -1729,7 +1770,7 @@
 
     const type = host.dataset.rankingType || "anime";
     const jikanEndpoint = type === "movie" ? "top/anime?type=movie&limit=5" : "top/anime?type=tv&limit=5";
-    const endpoint = `api/jikan_proxy.php?endpoint=${encodeURIComponent(jikanEndpoint)}`;
+    const endpoint = `${appUrl("api/jikan_proxy")}?endpoint=${encodeURIComponent(jikanEndpoint)}`;
 
     host.innerHTML = `<div class="text-xs text-on-surface-variant">Cargando ranking...</div>`;
 
@@ -1816,7 +1857,6 @@
   }
 
 })();
-
 
 
 

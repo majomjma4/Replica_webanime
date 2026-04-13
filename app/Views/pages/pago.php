@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="assets/js/layout.js?v=theme3"></script>
+<script src="assets/js/layout.js?v=theme1"></script>
     <script src="assets/js/shared-utils.js?v=1"></script>
 <script id="tailwind-config">
       tailwind.config = {
@@ -446,7 +446,7 @@
         log("Procesando transacción...");
         window.onbeforeunload = () => "Pago en curso...";
 
-        const res = await fetch("api/auth.php?action=buy_premium", { method: "POST" });
+        const res = await fetch("<?= asset_path('api/auth') ?>?action=buy_premium", { method: "POST" });
         const data = await res.json();
         window.onbeforeunload = null;
 
@@ -508,7 +508,7 @@
 </script>
 
 <script src="assets/js/i18n.js"></script>
-<script src="assets/js/search.js?v=popular4"></script>
+<script src="assets/js/search.js?v=popular7"></script>
 </body>
 </html>
 

@@ -646,17 +646,43 @@
     return out;
   }
 
+  function showSkeletons(count) {
+    if (!grid) return;
+    for (let i = 0; i < count; i++) {
+       const skel = document.createElement("article");
+       skel.className = "group rounded-lg bg-surface-container-low p-4 animate-pulse skeleton-loader";
+       skel.innerHTML = `
+         <div class="relative aspect-[2/3] overflow-hidden rounded-lg bg-surface-container-highest/40"></div>
+         <div class="space-y-2 mt-3">
+           <div class="h-5 bg-surface-container-highest/40 rounded w-full"></div>
+           <div class="h-4 bg-surface-container-highest/40 rounded w-2/3"></div>
+         </div>
+       `;
+       grid.appendChild(skel);
+    }
+  }
+
+  function hideSkeletons() {
+    if (!grid) return;
+    grid.querySelectorAll(".skeleton-loader").forEach(el => el.remove());
+  }
+
   async function onLoadMore() {
     if (loading) return;
     loading = true;
     loadBtn.disabled = true;
     hydrateSeen();
+    
+    showSkeletons(batchSize);
     let items = [];
     try {
       items = await fetchMore();
     } catch {
       items = [];
     }
+    
+    hideSkeletons();
+    
     if (items.length < batchSize) {
       items = items.concat(pickFallback(batchSize - items.length));
     }

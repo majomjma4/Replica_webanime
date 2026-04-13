@@ -65,7 +65,7 @@
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <link rel="icon" href="<?= asset_path('img/icon3.png') ?>" />
-    <title>Solo Leveling | NekoraList</title>
+    <title><?= e(!empty($detailQuery) ? ucwords($detailQuery) : 'Cargando...') ?> | NekoraList</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -281,13 +281,13 @@
                   <span class="text-on-surface-variant text-sm font-normal ml-1">Puntuaci&oacute;n</span>
                 </span>
               </div>
-              <h1 class="font-headline text-5xl lg:text-7xl font-extrabold tracking-tighter text-on-surface">Solo Leveling</h1>
+              <h1 class="font-headline text-5xl lg:text-7xl font-extrabold tracking-tighter text-on-surface"><?php if(!empty($detailQuery)): ?><?= e(ucwords($detailQuery)) ?><?php else: ?><span class="inline-block animate-pulse bg-surface-container-higher/80 rounded-xl h-[48px] lg:h-[72px] w-[60%]"></span><?php endif; ?></h1>
               <p id="detail-status-meta" class="text-on-surface-variant font-medium flex gap-4 text-sm lg:text-base">
-                <span>Estado: En emisi&oacute;n</span>
+                <span class="flex items-center gap-2">Estado: <span class="inline-block animate-pulse bg-surface-container-highest rounded h-4 w-16"></span></span>
                 <span class="text-outline-variant">&gt;&lt;</span>
-                <span>Episodios: 12/24</span>
+                <span class="flex items-center gap-2">Episodios: <span class="inline-block animate-pulse bg-surface-container-highest rounded h-4 w-8"></span></span>
                 <span class="text-outline-variant">&gt;&lt;</span>
-                <span>Duraci&oacute;n: 24m</span>
+                <span class="flex items-center gap-2">Duraci&oacute;n: <span class="inline-block animate-pulse bg-surface-container-highest rounded h-4 w-16"></span></span>
               </p>
             </div>
             <div id="detail-genres" class="flex flex-wrap gap-2">
@@ -330,27 +330,26 @@ endif; ?>
         <!-- Right Column: Información -->
         <div class="space-y-10">
           <div class="bg-surface-container-low rounded-lg p-8 border border-outline-variant/5 space-y-8">
-        <!-- Right Column: Información -->
             <div id="detail-info-block" class="space-y-6">
               <div class="flex flex-col gap-1">
-            <h3 class="font-headline text-xl font-bold border-b border-outline-variant/10 pb-4">Información</h3>
-                <span class="text-on-surface font-medium">...</span>
+                <h3 class="font-headline text-xl font-bold border-b border-outline-variant/10 pb-4">Información</h3>
+                <span class="mt-2 text-on-surface font-medium inline-block animate-pulse bg-surface-container-highest rounded h-5 w-32"></span>
               </div>
               <div class="flex flex-col gap-1">
                 <span class="text-xs text-on-surface-variant uppercase tracking-widest font-bold">Studio</span>
-                <span class="text-primary font-medium">A-1 Pictures</span>
+                <span class="text-primary font-medium inline-block animate-pulse bg-surface-container-highest rounded h-5 w-24"></span>
               </div>
               <div class="flex flex-col gap-1">
                 <span class="text-xs text-on-surface-variant uppercase tracking-widest font-bold">Source</span>
-                <span class="text-on-surface font-medium">...</span>
+                <span class="text-on-surface font-medium inline-block animate-pulse bg-surface-container-highest rounded h-5 w-28"></span>
               </div>
               <div class="flex flex-col gap-1">
                 <span class="text-xs text-on-surface-variant uppercase tracking-widest font-bold">Aired</span>
-                <span class="text-on-surface font-medium">...</span>
+                <span class="text-on-surface font-medium inline-block animate-pulse bg-surface-container-highest rounded h-5 w-20"></span>
               </div>
               <div class="flex flex-col gap-1">
                 <span class="text-xs text-on-surface-variant uppercase tracking-widest font-bold">Rating</span>
-                <span class="text-on-surface font-medium">...</span>
+                <span class="text-on-surface font-medium inline-block animate-pulse bg-surface-container-highest rounded h-5 w-32"></span>
               </div>
             </div>
           </div>
@@ -561,15 +560,15 @@ endif; ?>
     </main>
     <!-- Footer Component -->
     <div data-layout="footer" class="relative z-20"></div>
-    <script src="<?= asset_path('assets/js/layout.js?v=theme3') ?>"></script>
-    <script src="<?= asset_path('assets/js/shared-utils.js?v=5') ?>"></script>
+    <script src="<?= asset_path('assets/js/layout.js?v=theme1') ?>"></script>
+    <script src="<?= asset_path('assets/js/shared-utils.js?v=3') ?>"></script>
     <script src="<?= asset_path('assets/js/i18n.js') ?>"></script>
-    <script src="<?= asset_path('assets/js/title-images.js?v=5') ?>"></script>
-    <script src="<?= asset_path('assets/js/search.js?v=popular4') ?>"></script>
-    <script src="<?= asset_path('assets/js/favorites.js?v=5') ?>"></script>
+    <script src="<?= asset_path('assets/js/title-images.js?v=3') ?>"></script>
+    <script src="<?= asset_path('assets/js/search.js?v=popular7') ?>"></script>
+    <script src="<?= asset_path('assets/js/favorites.js?v=4') ?>"></script>
     <script src="<?= asset_path('assets/js/detail-links.js?v=6') ?>"></script>
     <script>window.__DETAIL_ROUTE_INFO = { ref: <?= json_encode($detailRef ?? "") ?>, query: <?= json_encode($detailQuery ?? "") ?> };</script>
-    <script src="<?= asset_path('assets/js/detail-data.js?v=53') ?>"></script>
+    <script src="<?= asset_path('assets/js/detail-data.js?v=42') ?>"></script>
     <script>
   document.addEventListener("DOMContentLoaded", () => {
     if (window.AniDexI18n) window.AniDexI18n.init();
@@ -972,25 +971,23 @@ endif; ?>
     let translationCache = loadTranslationCache();
     const translateToSpanish = async (text) => {
       const clean = String(text || "").replace(/\s+/g, " ").trim();
-      if (!clean) return "";
-      if (isLikelySpanish(clean)) return clean;
-      if (translationCache[clean]) return translationCache[clean];
+      if (!clean) return { text: "", translated: false };
+      if (isLikelySpanish(clean)) return { text: clean, translated: false };
+      if (translationCache[clean]) return { text: translationCache[clean], translated: true };
+
       try {
-        const query = encodeURIComponent(clean.slice(0, 500));
-        const res = await fetch(`https://api.mymemory.translated.net/get?q=${query}&langpair=en|es`);
-        if (!res.ok) return "";
-        const json = await res.json();
-        let translated = String(json?.responseData?.translatedText || "").replace(/\s+/g, " ").trim();
-        if (!translated) return "";
-        if (!isLikelySpanish(translated) && translated.toLowerCase() === clean.toLowerCase()) {
-          return "";
+        if (window.AniDexShared && typeof window.AniDexShared.translateAutoToEs === "function") {
+          const translated = await window.AniDexShared.translateAutoToEs(clean);
+          if (translated && translated !== clean) {
+            translationCache[clean] = translated;
+            saveTranslationCache(translationCache);
+            return { text: translated, translated: true };
+          }
         }
-        translationCache[clean] = translated;
-        saveTranslationCache(translationCache);
-        return translated;
-      } catch {
-        return "";
+      } catch (e) {
+        console.warn("Error en traducción:", e);
       }
+      return { text: clean, translated: false };
     };
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const fetchJikanReviews = async (retries = 2) => {
@@ -1018,12 +1015,10 @@ endif; ?>
           };
         });
         for (const item of mapped) {
-          if (!item.text) {
-            item.text = "Comentario no disponible en espa&ntilde;ol.";
-            continue;
-          }
-          const translated = await translateToSpanish(item.text);
-          item.text = translated ? truncate(translated) : "Comentario no disponible en espa&ntilde;ol.";
+          if (!item.text) continue;
+          const res = await translateToSpanish(item.text);
+          item.text = truncate(res.text);
+          item.isTranslated = res.translated;
         }
         return mapped;
       } catch {
@@ -1092,7 +1087,7 @@ endif; ?>
                 </div>
               </div>
             </div>
-            <p class="text-sm text-on-surface leading-relaxed">${item.text}</p>
+            <p class="text-sm text-on-surface leading-relaxed">${item.text}${item.isTranslated ? ' <span class="text-[10px] font-bold text-sky-400/80 italic ml-1" title="Traducido autom&aacute;ticamente">(Traducido)</span>' : ''}</p>
           </div>`;
       }).join("");
       list.querySelectorAll("[data-comment-delete-id]").forEach((btn) => {

@@ -425,11 +425,11 @@
             </div>
             <a class="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-bold text-primary shadow-[0_0_12px_rgba(168,85,247,0.25)] transition-all hover:border-primary hover:bg-primary/20 hover:text-primary" href="<?= route_path('featured') ?>">
               <span class="material-symbols-outlined text-base" style="font-variation-settings: 'FILL' 1;">arrow_forward</span>
-              Ver mas
+              Ver m&aacute;s
             </a>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-6 h-[min(60vh,37.5rem)] spotlight-grid spotlight-grid--compact">
-            <div id="spotlight-card-1" class="md:col-span-2 md:row-span-2 relative rounded-lg overflow-hidden group cursor-pointer bg-surface-container-low border border-outline-variant/10 spotlight-card" onclick="window.location.href='detail'">
+            <div id="spotlight-card-1" class="md:col-span-2 md:row-span-2 relative rounded-lg overflow-hidden group cursor-pointer bg-surface-container-low border border-outline-variant/10 spotlight-card" data-mal-id="52991" data-title="Solo Leveling">
               <div class="absolute top-4 right-4 z-10">
                 <div data-spotlight-score class="bg-surface-container-lowest/90 backdrop-blur px-4 py-2 rounded-full text-base font-bold text-primary flex items-center gap-2 shadow-xl shadow-black/35">
                   <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
@@ -445,7 +445,7 @@
                 <p data-spotlight-meta class="text-sm text-on-surface-variant">2024 - Studio</p>
               </div>
             </div>
-            <div id="spotlight-card-2" class="md:col-span-2 relative rounded-lg overflow-hidden group cursor-pointer bg-surface-container-low border border-outline-variant/10 spotlight-card" onclick="window.location.href='detail'">
+            <div id="spotlight-card-2" class="md:col-span-2 relative rounded-lg overflow-hidden group cursor-pointer bg-surface-container-low border border-outline-variant/10 spotlight-card" data-mal-id="54492" data-title="The Apothecary Diaries">
               <div class="absolute top-4 right-4 z-10">
                 <div data-spotlight-score class="bg-surface-container-lowest/90 backdrop-blur px-4 py-2 rounded-full text-base font-bold text-primary flex items-center gap-2 shadow-xl shadow-black/35">
                   <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
@@ -459,7 +459,7 @@
                 <h3 class="text-2xl font-bold text-center px-4">The Apothecary Diaries</h3>
               </div>
             </div>
-            <div id="spotlight-card-3" class="relative rounded-lg overflow-hidden group cursor-pointer bg-surface-container-low border border-outline-variant/10 spotlight-card" onclick="window.location.href='detail'">
+            <div id="spotlight-card-3" class="relative rounded-lg overflow-hidden group cursor-pointer bg-surface-container-low border border-outline-variant/10 spotlight-card" data-mal-id="52002" data-title="Undead Unluck">
               <div class="absolute top-4 right-4 z-10">
                 <div data-spotlight-score class="bg-surface-container-lowest/90 backdrop-blur px-4 py-2 rounded-full text-base font-bold text-primary flex items-center gap-2 shadow-xl shadow-black/35">
                   <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
@@ -472,7 +472,7 @@
                 <h4 class="font-bold spotlight-subtitle">Undead Unluck</h4>
               </div>
             </div>
-            <div id="spotlight-card-4" class="relative rounded-lg overflow-hidden group cursor-pointer bg-surface-container-low border border-outline-variant/10 spotlight-card" onclick="window.location.href='detail'">
+            <div id="spotlight-card-4" class="relative rounded-lg overflow-hidden group cursor-pointer bg-surface-container-low border border-outline-variant/10 spotlight-card" data-mal-id="54234" data-title="Haikyuu!! Final">
               <div class="absolute top-4 right-4 z-10">
                 <div data-spotlight-score class="bg-surface-container-lowest/90 backdrop-blur px-4 py-2 rounded-full text-base font-bold text-primary flex items-center gap-2 shadow-xl shadow-black/35">
                   <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
@@ -508,7 +508,7 @@
             </div>
             <div id="trending-row" class="carousel-row overflow-x-auto no-scrollbar pb-8 scroll-smooth">
             <!-- Anime Card -->
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl group-hover:shadow-primary-container/10">
                 <img alt="P&oacute;ster de anime" class="w-full h-full object-cover" data-alt="Arte de personaje anime estilizado con colores vibrantes" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAf_5yu8ItByDxj1mtS86M1c4L-O9mK0YowNyDHJw9W3iBVZ8FyDg-EqWFT6-8OHsq_coAIAP0l958Z_MmlAFEJw4WhJphbR4l9vrMyWi2j3WVvXgYbjrEmsF1lNw_pei3FsECFfbJAjngFTubB3gifJd8ggZOoo0o4uF2DMo2NTvstvfpwoVeh2cIGu3izqmnqcGUvtn3bfztDQjI_3f_PqRWRxgPC6iAsoNpidsC32rJsZNIfPPYMhlo5KeRXtnq6jjUFrMUTk0d4"/>
                 <div class="absolute inset-0 bg-primary-container/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
@@ -524,7 +524,7 @@
               <h3 class="font-bold text-on-surface group-hover:text-primary transition-colors truncate">Jujutsu Kaisen</h3>
               <p class="text-xs text-on-surface-variant">Estudio MAPPA: Oto&ntilde;o 2023</p>
             </div>
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl">
                 <img alt="P&oacute;ster de anime" class="w-full h-full object-cover" data-alt="Ilustración dinámica de personaje anime con líneas definidas" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAG7j1khN7oa42GFgVO0GGKUGrbVAHUi69ljVSoVZw2JzGhXLGZPmMJVg-fuQthZ2BjRmQPHtiljA6oG5wD0e2QgsOauHs8rHo6CfVW_-qbdDPyc6WFV6NSVCR2bXYGfJANdbVZu3JCvQHDHUgQb-65j6hS6Sxh3KsQpp8TrqHwC-smxyfYY2kHVMRaba4VaaF-d0mASZkln-xJrLjreN-5Eryk7As7G1yYpz_0v5C6rK-TlGmV91TVOYBi2hNx43byaOojLl2FHhT9"/>
                 <div class="absolute inset-0 bg-primary-container/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
@@ -539,7 +539,7 @@
               <h3 class="font-bold text-on-surface group-hover:text-primary transition-colors truncate">Monster</h3>
               <p class="text-xs text-on-surface-variant">Estudio Madhouse: Cl&aacute;sico</p>
             </div>
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl">
                 <img alt="P&oacute;ster de anime" class="w-full h-full object-cover" data-alt="Ciudad anime detallada de noche con luces de neón" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWK6GEmMfgg6EfbuobMqKnAGEoBR-JDGiUg00ci-kmNlIZtDkYI6Kn2Ke0sXVPIgNQCXFd-IsHB0kiCe8S2Zky7Vx8s8Yv0q9tzs5HYMvwxzBr6cc0oZ2o_86dXwOsGkjr4PDjv3ULdj9hX4Eanz5BPS7V2PEEqNSKPjrv61ZaMxz7RmFHx1Ah01hoqVReWKva7mpYkiw9VwRTTlov4AGu-uJhSG3Bln2hIug_IIGpsqGQXkCpk6x8T2qTeXcy2R7y7otUdEHtPV9T"/>
                 <div class="absolute inset-0 bg-primary-container/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
@@ -554,7 +554,7 @@
               <h3 class="font-bold text-on-surface group-hover:text-primary transition-colors truncate">Ciberpunk: Edgerunners</h3>
               <p class="text-xs text-on-surface-variant">Estudio Trigger: Limitado</p>
             </div>
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl">
                 <img alt="P&oacute;ster de anime" class="w-full h-full object-cover" data-alt="Silueta de espadachín anime contra una luna roja" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAR9x5iy6NpAOvezWnwzK2vesTKLBp29cvFNXUtwXht6dD1l_D5gxqns-j0rTWWHrKxrDe_gNz2hRv_bp72i7d3-B1XfbVcKL9UOdKUyxhkn7PVkTFK6gvR6FYot0OR1ZFv5kxq0aRiZ5uP-MPaYLYP3NbHMNLEF22YktmuRvb3820xC4ub0dVEhj3jZVy7-ZDMJBIgRaWhSUwsjWpaA_FPrQNkZspeF-urqaKWFj1HOZJbRz951KKRSdvfM9UeaS3zgtT822TzJSbT"/>
                 <div class="absolute inset-0 bg-primary-container/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
@@ -570,7 +570,7 @@
               <h3 class="font-bold text-on-surface group-hover:text-primary transition-colors truncate">Demon Slayer</h3>
               <p class="text-xs text-on-surface-variant">Estudio ufotable: S3</p>
             </div>
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl">
                 <img alt="P&oacute;ster de anime" class="w-full h-full object-cover" data-alt="Paisaje rural anime tranquilo con luz suave" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCje1xHJ1WUA4g9yIIDEH_pR92E2kB6X1s837gGJD9UFj8E0mQUkxMN_rTpbmtI9LLd4eZnx3hIvb-U8EcBBpfSmNGAKWLzD_Eb1ppR87UR5wnTD3fPpOlY74X-I4P4p5J0Wpv-HTIa4kWox8n8dlfB6caMiMRLPuYkHJD_0lxfUZz4aT79i5VovpVuKkPEe3n5WiMUARuk4BRWUvsDr1xczcOQelSreIiJtPyQWQfnq0GKXptfgVdrHAE1Wxb4YsMhAapniXWKOFfH"/>
                 <div class="absolute inset-0 bg-primary-container/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
@@ -587,28 +587,28 @@
               <p class="text-xs text-on-surface-variant">Estudio Artland: Cl&aacute;sico</p>
             </div>
 
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl">
                 <img alt="P&oacute;ster de anime" class="w-full h-full object-cover" src="https://cdn.myanimelist.net/images/anime/1171/109222l.jpg"/>
               </div>
               <h3 class="font-bold text-on-surface group-hover:text-primary transition-colors truncate">Hunter x Hunter</h3>
               <p class="text-xs text-on-surface-variant">Estudio Madhouse: Aventura</p>
             </div>
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl">
                 <img alt="P&oacute;ster de anime" class="w-full h-full object-cover" src="https://cdn.myanimelist.net/images/anime/1935/127974l.jpg"/>
               </div>
               <h3 class="font-bold text-on-surface group-hover:text-primary transition-colors truncate">Chainsaw Man</h3>
               <p class="text-xs text-on-surface-variant">Estudio MAPPA: Acci&oacute;n</p>
             </div>
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl">
                 <img alt="P&oacute;ster de anime" class="w-full h-full object-cover" src="https://cdn.myanimelist.net/images/anime/1208/94745l.jpg"/>
               </div>
               <h3 class="font-bold text-on-surface group-hover:text-primary transition-colors truncate">One Punch Man</h3>
               <p class="text-xs text-on-surface-variant">Estudio Madhouse: Comedia</p>
             </div>
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl">
                 <img alt="P&oacute;ster de anime" class="w-full h-full object-cover" src="https://cdn.myanimelist.net/images/anime/10/47347l.jpg"/>
               </div>
@@ -622,7 +622,7 @@
         <section class="px-8 md:px-16">
           <div class="flex items-end justify-between mb-8">
             <div>
-              <h2 class="text-3xl font-bold font-headline tracking-tight"><span class="section-title-em movie">Películas</span> Populares</h2>
+              <h2 class="text-3xl font-bold font-headline tracking-tight"><span class="section-title-em movie">Pel&iacute;culas</span> Populares</h2>
               <div class="h-1 w-12 bg-primary mt-2 rounded-full"></div>
             </div>
             <a class="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-bold text-primary shadow-[0_0_12px_rgba(168,85,247,0.25)] transition-all hover:border-primary hover:bg-primary/20 hover:text-primary" href="<?= route_path('movies') ?>">
@@ -638,7 +638,7 @@
               <button id="movies-next" class="carousel-nav-btn rounded-full bg-surface-container-high/90 px-4 py-3 text-2xl font-bold text-violet-200 hover:text-white hover:bg-surface-container-high transition-colors backdrop-blur" type="button" aria-label="Siguiente">&rsaquo;</button>
             </div>
             <div id="movies-row" class="carousel-row overflow-x-auto no-scrollbar pb-8 scroll-smooth">
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl">
                 <img alt="P&oacute;ster de pel&iacute;cula" class="w-full h-full object-cover" src="https://cdn.myanimelist.net/images/anime/1598/118702l.jpg"/>
                 <div class="absolute inset-0 bg-primary-container/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
@@ -648,7 +648,7 @@
               <h3 class="font-bold text-on-surface group-hover:text-primary transition-colors truncate">Suzume</h3>
               <p class="text-xs text-on-surface-variant">G&eacute;nero: Drama, Fantas&iacute;a</p>
             </div>
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl">
                 <img alt="P&oacute;ster de pel&iacute;cula" class="w-full h-full object-cover" src="https://cdn.myanimelist.net/images/anime/5/87048l.jpg"/>
                 <div class="absolute inset-0 bg-primary-container/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
@@ -658,7 +658,7 @@
               <h3 class="font-bold text-on-surface group-hover:text-primary transition-colors truncate">Tu Nombre.</h3>
               <p class="text-xs text-on-surface-variant">G&eacute;nero: Romance, Drama</p>
             </div>
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl">
                 <img alt="P&oacute;ster de pel&iacute;cula" class="w-full h-full object-cover" src="https://cdn.myanimelist.net/images/anime/6/79597l.jpg"/>
                 <div class="absolute inset-0 bg-primary-container/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
@@ -668,7 +668,7 @@
               <h3 class="font-bold text-on-surface group-hover:text-primary transition-colors truncate">Akira</h3>
               <p class="text-xs text-on-surface-variant">G&eacute;nero: Acci&oacute;n, Sci-Fi</p>
             </div>
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl">
                 <img alt="P&oacute;ster de pel&iacute;cula" class="w-full h-full object-cover" src="https://cdn.myanimelist.net/images/anime/5/75810l.jpg"/>
                 <div class="absolute inset-0 bg-primary-container/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
@@ -678,7 +678,7 @@
               <h3 class="font-bold text-on-surface group-hover:text-primary transition-colors truncate">El Viaje de Chihiro</h3>
               <p class="text-xs text-on-surface-variant">G&eacute;nero: Aventura, Fantas&iacute;a</p>
             </div>
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl">
                 <img alt="P&oacute;ster de pel&iacute;cula" class="w-full h-full object-cover" src="https://cdn.myanimelist.net/images/anime/7/75919l.jpg"/>
                 <div class="absolute inset-0 bg-primary-container/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
@@ -688,7 +688,7 @@
               <h3 class="font-bold text-on-surface group-hover:text-primary transition-colors truncate">La Princesa Mononoke</h3>
               <p class="text-xs text-on-surface-variant">G&eacute;nero: Aventura, Drama</p>
             </div>
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl">
                 <img alt="P&oacute;ster de pel&iacute;cula" class="w-full h-full object-cover" src="https://cdn.myanimelist.net/images/anime/1775/111742l.jpg"/>
                 <div class="absolute inset-0 bg-primary-container/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
@@ -698,7 +698,7 @@
               <h3 class="font-bold text-on-surface group-hover:text-primary transition-colors truncate">El Castillo Ambulante</h3>
               <p class="text-xs text-on-surface-variant">G&eacute;nero: Aventura, Fantas&iacute;a</p>
             </div>
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl">
                 <img alt="P&oacute;ster de pel&iacute;cula" class="w-full h-full object-cover" src="https://cdn.myanimelist.net/images/anime/10/75815l.jpg"/>
                 <div class="absolute inset-0 bg-primary-container/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
@@ -708,7 +708,7 @@
               <h3 class="font-bold text-on-surface group-hover:text-primary transition-colors truncate">Mi Vecino Totoro</h3>
               <p class="text-xs text-on-surface-variant">G&eacute;nero: Familiar, Fantas&iacute;a</p>
             </div>
-            <div class="carousel-card group cursor-pointer" onclick="window.location.href='detail'">
+            <div class="carousel-card group cursor-pointer" data-mal-id="21" data-title="One Punch Man">
               <div class="relative aspect-[2/3] rounded-lg overflow-hidden bg-surface-container-high mb-4 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.04] shadow-xl">
                 <img alt="P&oacute;ster de pel&iacute;cula" class="w-full h-full object-cover" src="https://cdn.myanimelist.net/images/anime/1889/141004l.jpg"/>
                 <div class="absolute inset-0 bg-primary-container/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
@@ -725,12 +725,12 @@
     </main>
     <!-- Footer Component -->
     <div data-layout="footer"></div>
-    <script src="assets/js/layout.js?v=theme3"></script>
+    <script src="assets/js/layout.js?v=theme1"></script>
     <script src="assets/js/shared-utils.js?v=1"></script>
     <script src="assets/js/i18n.js"></script>
-    <script src="assets/js/title-images.js?v=5"></script>
-    <script src="assets/js/search.js?v=popular4"></script>
-    <script src="assets/js/favorites.js?v=5"></script>
+    <script src="assets/js/title-images.js?v=3"></script>
+    <script src="assets/js/search.js?v=popular7"></script>
+    <script src="assets/js/favorites.js?v=4"></script>
     <script src="assets/js/detail-links.js?v=5"></script>
     <script>
   document.addEventListener("DOMContentLoaded", () => {
@@ -929,11 +929,8 @@
         heroWatchBtn.onclick = () => {
           const title = item?.__displayTitle || item?.title || "anime";
           const malId = item?.mal_id || item?.__malId;
-          if (malId) {
-            window.location.href = `detail?mal_id=${encodeURIComponent(String(malId))}&q=${encodeURIComponent(title)}`;
-          } else {
-            const q = encodeURIComponent(title);
-            window.location.href = `detail?q=${q}`;
+          if (malId || title) {
+            window.location.href = window.AniDexShared.buildDetailUrl(malId, title);
           }
         };
       }

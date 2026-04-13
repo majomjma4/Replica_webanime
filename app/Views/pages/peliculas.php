@@ -361,7 +361,7 @@
 <section class="mt-6 rounded-lg bg-surface-container-low p-4" aria-label="Ranking">
   <div class="mb-3 flex items-center justify-between gap-3">
     <h3 class="text-sm font-bold uppercase tracking-widest text-on-surface-variant">Top 5 Ranking</h3>
-    <a class="text-xs font-semibold text-primary hover:text-primary-dim" href="ranking\.php">Ver ranking</a>
+    <a class="text-xs font-semibold text-primary hover:text-primary-dim" href="<?= route_path('ranking') ?>">Ver ranking</a>
   </div>
   <div id="sidebar-ranking" data-sidebar-ranking data-ranking-type="movie" class="space-y-3">
     <div class="text-xs text-on-surface-variant">Cargando ranking...</div>
@@ -502,13 +502,13 @@
 
 <!-- Footer Component -->
 <div data-layout="footer"></div>
-<script src="<?= asset_path('assets/js/layout.js?v=theme3') ?>"></script>
-    <script src="<?= asset_path('assets/js/shared-utils.js?v=5') ?>"></script>
+<script src="<?= asset_path('assets/js/layout.js?v=theme1') ?>"></script>
+    <script src="<?= asset_path('assets/js/shared-utils.js?v=3') ?>"></script>
 </div>
 
 <script src="<?= asset_path('assets/js/i18n.js') ?>"></script>
 <script src="<?= asset_path('assets/js/title-images.js?v=1774473995,31197') ?>"></script>
-<script src="<?= asset_path('assets/js/search.js?v=popular4') ?>"></script>
+<script src="<?= asset_path('assets/js/search.js?v=popular7') ?>"></script>
 <script src="<?= asset_path('assets/js/detail-links.js?v=5') ?>"></script>
 <script src="<?= asset_path('assets/js/filters.js?v=final5') ?>"></script>
 <script src="<?= asset_path('assets/js/load-more.js?v=1774473995,31197') ?>"></script>

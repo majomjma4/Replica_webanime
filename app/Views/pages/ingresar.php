@@ -196,7 +196,7 @@
       })();
     </script>
 
-    <script src="assets/js/layout.js?v=theme3"></script>
+    <script src="assets/js/layout.js?v=theme1"></script>
     <script src="assets/js/shared-utils.js?v=1"></script>
     <div id="login-success" class="fixed inset-0 z-[80] hidden">
       <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
@@ -315,7 +315,7 @@
       const pass = (passInput && passInput.value.trim()) || "";
       
       try {
-        const res = await fetch('api/auth.php?action=login', {
+        const res = await fetch("<?= asset_path('api/auth') ?>?action=login", {
           method: 'POST',
           credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
@@ -396,7 +396,7 @@
           btn.disabled = true;
           
           try {
-            const res = await fetch('api/auth.php?action=forgot_password', {
+            const res = await fetch("<?= asset_path('api/auth') ?>?action=forgot_password", {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ userOrEmail: input.value.trim() })

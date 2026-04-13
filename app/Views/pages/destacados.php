@@ -299,14 +299,21 @@
       <section>
   <div id="featured-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
 </section>
-<script src="assets/js/load-more.js?v=5"></script>
+<script src="assets/js/load-more.js?v=3"></script>
 <script>
 (function () {
+  const appUrl = window.AniDexShared?.buildAppUrl || ((path = "") => String(path || ""));
+  const buildDetailUrl = window.AniDexShared?.buildDetailUrl || ((malId = "", title = "") => {
+    const numericId = String(malId || "").trim();
+    if (/^\d+$/.test(numericId)) return appUrl(`detail/${encodeURIComponent(numericId)}`);
+    const cleanTitle = String(title || "").trim();
+    return cleanTitle ? appUrl(`detail?q=${encodeURIComponent(cleanTitle)}`) : appUrl("detail");
+  });
   const select = document.getElementById("featured-type");
   const grid = document.getElementById("featured-grid");
   if (!grid) return;
 
-  const API = "api/jikan_proxy.php";
+  const API = appUrl("api/jikan_proxy");
   const norm = (v) => (v || "").toString().toLowerCase().replace(/\s+/g, " ").trim();
   const fixText = (s) => {
     return (s || "")
@@ -332,7 +339,6 @@
     const article = document.createElement("article");
     article.className = "featured-card group rounded-[0.9rem] overflow-hidden bg-zinc-900 border border-zinc-800 cursor-pointer transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)]";
     if (it?.mal_id) article.setAttribute("data-mal-id", String(it.mal_id));
-    article.setAttribute("onclick", "window.location.href='detail'");
     const imgSrc = it?.images?.webp?.large_image_url || it?.images?.jpg?.large_image_url || it?.images?.jpg?.image_url || "";
     const title = it?.title || "Anime";
     const genres = (it?.genres || []).map((g) => g?.name).filter(Boolean).slice(0, 2).join(", ");
@@ -353,6 +359,9 @@
     const media = article.querySelector(".relative");
     const score = typeof it?.score === "number" ? it.score.toFixed(1) : "";
     setBadge(media, score);
+    article.addEventListener("click", () => {
+      window.location.href = buildDetailUrl(it?.mal_id || "", title);
+    });
     return article;
   };
 
@@ -384,7 +393,17 @@
   });
 
   const loadFeatured = async () => {
-    grid.innerHTML = "<p class=\"text-zinc-400\">Cargando destacados...</p>";
+    grid.innerHTML = Array.from({length: 8}, () => `
+      <article class="featured-card group rounded-[0.9rem] overflow-hidden bg-zinc-900 border border-zinc-800 animate-pulse">
+        <div class="relative aspect-[2/3] p-2">
+          <div class="w-full h-full bg-zinc-800 rounded-[0.7rem]"></div>
+        </div>
+        <div class="p-4 space-y-3">
+          <div class="h-5 bg-zinc-800 rounded w-3/4"></div>
+          <div class="h-4 bg-zinc-800 rounded w-1/2"></div>
+        </div>
+      </article>
+    `).join('');
     try {
       const [resAnime, resMovie] = await Promise.all([
         fetch(`${API}?endpoint=${encodeURIComponent('top/anime?filter=bypopularity&limit=20')}`),
@@ -420,7 +439,21 @@
     }
   };
 
-  loadFeatured().then(setActionState);
+  const initDestacados = () => {
+    loadFeatured().then(setActionState);
+  };
+
+  if (window.AniDexLayout && typeof window.AniDexLayout.onReady === "function") {
+    window.AniDexLayout.onReady(initDestacados);
+  } else {
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.AniDexLayout && typeof window.AniDexLayout.onReady === "function") {
+        window.AniDexLayout.onReady(initDestacados);
+      } else {
+        initDestacados();
+      }
+    });
+  }
 })();
 </script>
       <div class="mt-12 flex justify-center gap-4" id="featured-actions">
@@ -430,10 +463,10 @@
     </main>
     <!-- Footer Component -->
     <div data-layout="footer"></div>
-    <script src="assets/js/layout.js?v=theme3"></script>
+    <script src="assets/js/layout.js?v=theme1"></script>
     <script src="assets/js/shared-utils.js?v=1"></script>
     <script src="assets/js/i18n.js"></script>
-    <script src="assets/js/search.js?v=popular4"></script>
+    <script src="assets/js/search.js?v=popular7"></script>
     <script src="assets/js/detail-links.js?v=5"></script>
     <script>
     document.addEventListener("DOMContentLoaded", () => {

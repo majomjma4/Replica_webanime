@@ -221,7 +221,7 @@
       })();
     </script>
 
-    <script src="assets/js/layout.js?v=theme3"></script>
+    <script src="assets/js/layout.js?v=theme1"></script>
     <script src="assets/js/shared-utils.js?v=1"></script>
     <div id="register-success" class="fixed inset-0 z-[80] hidden">
       <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
@@ -303,7 +303,7 @@
       const email = form.querySelector('[name="register-email"]').value.trim();
       
       try {
-        const res = await fetch('api/auth.php?action=register', {
+        const res = await fetch("<?= asset_path('api/auth') ?>?action=register", {
           method: 'POST',
           credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },

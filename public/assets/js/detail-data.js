@@ -1,5 +1,15 @@
 const AniDexDetailDataBoot = () => {
-  const appUrl = window.AniDexShared?.buildAppUrl || ((path = "") => String(path || ""));
+  const getFallbackBasePath = () => {
+    const loc = window.location.pathname;
+    if (loc.includes("/WebAnime/")) return "/WebAnime/";
+    if (loc.includes("/WebAnime_CI4_Replica/")) return "/WebAnime_CI4_Replica/";
+    return "/";
+  };
+  const appUrl = (path = "") => {
+    if (window.AniDexShared?.buildAppUrl) return window.AniDexShared.buildAppUrl(path);
+    const base = getFallbackBasePath();
+    return base + (path.startsWith("/") ? path.slice(1) : path);
+  };
   const API = appUrl("api/jikan_proxy");
   const DETAIL_OVERRIDES = {
     57658: {
@@ -139,8 +149,8 @@ const AniDexDetailDataBoot = () => {
   const toSpanishStatus = (value) => {
     const v = (value || "").toLowerCase();
     if (v.includes("finished")) return "Finalizado";
-    if (v.includes("currently")) return "En emisión";
-    if (v.includes("not yet")) return "Próximamente";
+    if (v.includes("currently")) return "En emisi\u00f3n";
+    if (v.includes("not yet")) return "Pr\u00f3ximamente";
     return value || "N/A";
   };
 
@@ -160,9 +170,9 @@ const AniDexDetailDataBoot = () => {
   const toSpanishRating = (value) => {
     const v = value || "";
     return v
-      .replace("R - 17+ (violence & profanity)", "R - 17+ (violencia y lenguaje explícito)")
-      .replace("PG-13 - Teens 13 or older", "PG-13 - Mayores de 13 años")
-      .replace("PG - Children", "PG - Público general")
+      .replace("R - 17+ (violence & profanity)", "R - 17+ (violencia y lenguaje expl\u00edcito)")
+      .replace("PG-13 - Teens 13 or older", "PG-13 - Mayores de 13 a\u00f1os")
+      .replace("PG - Children", "PG - P\u00fablico general")
       .replace("G - All Ages", "G - Todas las edades")
       .replace("Rx - Hentai", "Rx - Adultos");
   };
@@ -330,31 +340,62 @@ const AniDexDetailDataBoot = () => {
     let isLocal = false;
 
     const localData = await fetchLocalAnime(malIdParam, query, dbIdParam);
-    if (localData) {
-      full = localData;
+    if (localData && localData.anime) {
+      full = localData.anime;
+      // Inyectamos datos profundos si vinieron de la DB
+      if (localData.characters) full.characters = localData.characters;
+      if (localData.videos) full.videos = localData.videos;
+      if (localData.pictures) full.pictures = localData.pictures;
+      if (localData.episodes) full.episodes_data = localData.episodes;
+      
       selectedId = full.mal_id;
       isLocal = true;
       
-      // Safety Fallback: Never show N/A if we have the main title
+      const needsComplement = !full.studios?.length || !full.genres?.length || (full.synopsis || "").length < 50 || !full.title_english || !full.title_japanese;
+      if (needsComplement && selectedId) {
+        const jikanFull = await byId(selectedId, "full");
+        if (jikanFull) {
+            if (!full.studios?.length && jikanFull.studios?.length) full.studios = jikanFull.studios;
+            if (!full.genres?.length && jikanFull.genres?.length) full.genres = jikanFull.genres;
+            if ((!full.synopsis || full.synopsis.length < 50) && jikanFull.synopsis) full.synopsis = jikanFull.synopsis;
+            if (!full.duration && jikanFull.duration) full.duration = jikanFull.duration;
+            if (!full.rating && jikanFull.rating) full.rating = jikanFull.rating;
+            if (!full.rank && jikanFull.rank) full.rank = jikanFull.rank;
+            if (!full.score && jikanFull.score) full.score = jikanFull.score;
+            if (!full.title_english && jikanFull.title_english) full.title_english = jikanFull.title_english;
+            if (!full.title_japanese && jikanFull.title_japanese) full.title_japanese = jikanFull.title_japanese;
+        }
+      }
       if (!full.title_english) full.title_english = full.title;
       if (!full.title_japanese) full.title_japanese = full.title;
     } else {
       if (malIdParam) {
         selectedId = Number(malIdParam);
-        if (selectedId) full = await byId(selectedId, "full");
+        if (selectedId) {
+          const res = await byId(selectedId, "full");
+          full = res?.data || res; // Manejo de Jikan v4
+        }
       }
       if (!full && query) {
         const found = await pickTitle(query);
         if (found) {
           selectedId = found.mal_id;
-          full = await byId(selectedId, "full");
+          const res = await byId(selectedId, "full");
+          full = res?.data || res; // Manejo de Jikan v4
         }
       }
     }
-    if (!full) return;
 
-    // Defer saving until sub-data (chars, vids, pics) is ready
+    if (!full) {
+      console.warn("NekoraDetail: No se pudo obtener información del anime.");
+      return;
+    }
 
+    // Normalizar selectedId y mal_id
+    if (full.mal_id) selectedId = Number(full.mal_id);
+    else if (selectedId) full.mal_id = selectedId;
+    
+    console.log("NekoraDetail: Iniciando sincronización para MAL_ID:", selectedId);
 
     try {
       const mapKey = "anidex_title_id_map_v1";
@@ -371,8 +412,9 @@ const AniDexDetailDataBoot = () => {
       addMap(preTitle);
       localStorage.setItem(mapKey, JSON.stringify(map));
     } catch {}
-    
+
     // 1. PERSISTENCIA INMEDIATA (FASE 1: Datos Básicos)
+    // Guardamos lo esencial primero para asegurarnos de que el anime exista en la BD
     if (full && full.mal_id) {
       const saveUrl = appUrl("api/save_anime");
       console.log("NekoraDetail: Enviando Fase 1 (Persistencia Rápida)...");
@@ -384,10 +426,10 @@ const AniDexDetailDataBoot = () => {
         }).then(r => r.json());
 
         if (res1.success) {
-          console.log(`NekoraDetail: Fase 1 [${res1.action || 'insert'}] exitosa. DB_ID: ${res1.id}`);
-          selectedId = Number(res1.mal_id || selectedId);
+          console.log(`NekoraDetail: Fase 1 [${res1.action}] exitosa. DB_ID: ${res1.id}`);
+          selectedId = Number(res1.mal_id || selectedId); // Refuerzo
         } else {
-          console.warn("NekoraDetail: Fase 1 no reportó éxito:", res1.error || res1.message);
+          console.warn("NekoraDetail: Fase 1 no reportó éxito:", res1.error);
         }
       } catch (e) {
         console.error("NekoraDetail: Error crítico en Fase 1:", e);
@@ -395,10 +437,11 @@ const AniDexDetailDataBoot = () => {
     }
 
     // 2. CARGA PROFUNDA (FASE 2: Personajes, Videos, Fotos)
+    // Se ejecuta DESPUÉS de asegurar que la Fase 1 terminó o falló, para no colisionar
     const [chars, vids, pics] = await Promise.all([
-      isLocal ? Promise.resolve(full.characters || []) : byId(selectedId, "characters").then((data) => data || []),
-      isLocal ? Promise.resolve(full.videos || {}) : byId(selectedId, "videos").then((data) => data || {}),
-      isLocal ? Promise.resolve(full.pictures || []) : byId(selectedId, "pictures").then((data) => data || [])
+      (isLocal && full.characters && full.characters.length > 0) ? Promise.resolve(full.characters) : byId(selectedId, "characters").then((data) => data || []),
+      (isLocal && full.videos && (full.videos.promo?.length > 0)) ? Promise.resolve(full.videos) : byId(selectedId, "videos").then((data) => data || {}),
+      (isLocal && full.pictures && full.pictures.length > 0) ? Promise.resolve(full.pictures) : byId(selectedId, "pictures").then((data) => data || [])
     ]);
 
     if (full && full.mal_id) {
@@ -411,6 +454,7 @@ const AniDexDetailDataBoot = () => {
       
       const saveUrl = appUrl("api/save_anime");
       console.log("NekoraDetail: Enviando Fase 2 (Persistencia Profunda)...");
+
       try {
         const res2 = await window.fetch(saveUrl, {
           method: "POST",
@@ -419,15 +463,14 @@ const AniDexDetailDataBoot = () => {
         }).then(r => r.json());
 
         if (res2.success) {
-          console.log(`NekoraDetail: Fase 2 [${res2.action || 'update'}] exitosa. DB_ID: ${res2.id}`);
+          console.log(`NekoraDetail: Fase 2 [${res2.action}] exitosa. DB_ID: ${res2.id}`);
         } else {
-          console.error("NekoraDetail: Error en Fase 2:", res2.error || res2.message);
+          console.error("NekoraDetail: Error en Fase 2:", res2.error);
         }
       } catch (err) {
         console.error("NekoraDetail: Fallo de red en Fase 2:", err);
       }
     }
-    
     const forceTitles = [
       "Jujutsu Kaisen: Shimetsu Kaiyuu - Zenpen"
     ];
@@ -738,7 +781,6 @@ const AniDexDetailDataBoot = () => {
       syn.textContent = await translateToEs(synText);
     }
 
-    // Update Status Meta (Status, Episodes, Duration)
     const statusMeta = document.getElementById("detail-status-meta");
     if (statusMeta) {
       const statusText = toSpanishStatus(full.status);
@@ -753,7 +795,6 @@ const AniDexDetailDataBoot = () => {
       `;
     }
 
-    // Update Genres
     const genreContainer = document.getElementById("detail-genres");
     if (genreContainer && full.genres) {
       genreContainer.innerHTML = full.genres.map(g => `
@@ -761,7 +802,6 @@ const AniDexDetailDataBoot = () => {
       `).join("");
     }
 
-    // Update Detailed Info Block
     const infoBlock = document.getElementById("detail-info-block");
     if (infoBlock) {
       infoBlock.innerHTML = "";
@@ -803,35 +843,42 @@ const AniDexDetailDataBoot = () => {
               : isOshiNoKo
                 ? "3"
                 : "1";
+      const decodeLink = (b64) => {
+        try {
+          return b64 ? atob(b64) : "";
+        } catch {
+          return b64 || "";
+        }
+      };
       const linksForTitle = isFrieren
         ? {
-            1: "https://uqload.is/2eeexv9bzxa9.html",
-            2: "https://uqload.is/5teq2c61tck5.html",
-            3: "https://uqload.is/7us4sel7kyxu.html"
+            1: "aHR0cHM6Ly91cWxvYWQuaXMvMmVlZXh2OWJ6eGE5Lmh0bWw=",
+            2: "aHR0cHM6Ly91cWxvYWQuaXMvNXRlcTJjNjF0Y2s1Lmh0bWw=",
+            3: "aHR0cHM6Ly91cWxvYWQuaXMvN3VzNHNlbDdreXh1Lmh0bWw="
           }
         : isJujutsuZenpen
           ? {
-              1: "https://uqload.is/praiiforf0iu.html",
-              2: "https://uqload.is/93eiodftxf42.html",
-              3: "https://uqload.is/a6u97rsk6m45.html"
+              1: "aHR0cHM6Ly91cWxvYWQuaXMvcHJhaWlmb3JmMGl1Lmh0bWw=",
+              2: "aHR0cHM6Ly91cWxvYWQuaXMvOTNlaW9kZnhmNDIuaHRtbA==",
+              3: "aHR0cHM6Ly91cWxvYWQuaXMvYTZ1OTdyc2s2bTQ1Lmh0bWw="
             }
           : isHellsParadise
             ? {
-                1: "https://uqload.is/rxbcak4w8fv2.html",
-                2: "https://uqload.is/0mu7b2lg2b9y.html",
-                3: "https://uqload.is/e2vhqb3mp4v8.html"
+                1: "aHR0cHM6Ly91cWxvYWQuaXMvcnhiY2FrNHc4ZnYyLmh0bWw=",
+                2: "aHR0cHM6Ly91cWxvYWQuaXMvMG11N2IybGcyYjl5Lmh0bWw=",
+                3: "aHR0cHM6Ly91cWxvYWQuaXMvZTJ2aHFiM21wNHY4Lmh0bWw="
               }
             : isSentencedHero
               ? {
-                  1: "https://uqload.is/l7qqqbie1dag.html",
-                  2: "https://uqload.is/s2sw5qm1wq35.html",
-                  3: "https://uqload.is/hdv22owq6n74.html"
+                  1: "aHR0cHM6Ly91cWxvYWQuaXMvbDdxcXFiaWUxZGFnLmh0bWw=",
+                  2: "aHR0cHM6Ly91cWxvYWQuaXMvczJzdzVxbTF3cTM1Lmh0bWw=",
+                  3: "aHR0cHM6Ly91cWxvYWQuaXMvaGR2MjJvd3E2bnc0Lmh0bWw="
                 }
               : isOshiNoKo
                 ? {
-                    1: "https://uqload.is/8p4gel5ytxm0.html",
-                    2: "https://uqload.is/upmo7gybfcap.html",
-                    3: "https://uqload.is/22odusepde14.html"
+                    1: "aHR0cHM6Ly91cWxvYWQuaXMvOHA0Z2VsNXl0eG0wLmh0bWw=",
+                    2: "aHR0cHM6Ly91cWxvYWQuaXMvdXBtbzdneWJmY2FwLmh0bWw=",
+                    3: "aHR0cHM6Ly91cWxvYWQuaXMvMjJvZHVzZXBkZTE0Lmh0bWw="
                   }
                 : {};
       const toEmbed = (link) => {
@@ -911,7 +958,11 @@ const AniDexDetailDataBoot = () => {
         } catch {}
       };
       let continueMap = loadContinue();
-      const isSeen = (ep) => Boolean(seenMap[String(ep)]);
+      const isSeen = (ep) => {
+        if (seenMap[String(ep)]) return true;
+        const key = `${selectedId || norm(preferredTitle || "")}-${ep}`;
+        return Boolean(continueMap[key]);
+      };
       const setSeen = (ep, seen) => {
         if (seen) seenMap[String(ep)] = true;
         else delete seenMap[String(ep)];
@@ -983,8 +1034,8 @@ const AniDexDetailDataBoot = () => {
         }[char] || char));
 
       const renderEpisodeCard = (item) => {
-        const safeLinkUrl = escapeHtml(item.linkUrl || "");
-        const safeEmbedUrl = escapeHtml(item.linkUrl ? toEmbed(item.linkUrl) : "");
+        const safeLinkUrl = item.linkUrl || "";
+        const safeEmbedUrl = item.linkUrl ? toEmbed(decodeLink(item.linkUrl)) : "";
         const safeEpisodeTitle = escapeHtml(item.epTitle);
         const safeEpisodeSynopsis = escapeHtml(item.epSynopsis);
         const safeImageSrc = escapeHtml(src);
@@ -1039,7 +1090,7 @@ const AniDexDetailDataBoot = () => {
       const lockEpisodes = () => {
         const lockText = isLogged
           ? "Activa el modo premium para ver los episodios"
-          : "Inicia sesión y accede al modo premium para ver los episodios";
+          : "Inicia sesi\u00f3n y accede al modo premium para ver los episodios";
         const goPremium = () => {
                     const appUrl = window.AniDexShared?.buildAppUrl;
           window.location.href = appUrl
@@ -1169,52 +1220,40 @@ const AniDexDetailDataBoot = () => {
             });
           }
         }));
-        flushEpisodeCache().catch(() => {});
+        flushEpisodeCache();
       };
-      const appendBatch = () => {
-        const nextItems = episodeItems.slice(shown, shown + pageSize);
-        if (!nextItems.length) return;
-        listEl.insertAdjacentHTML("beforeend", nextItems.map(renderEpisodeCard).join(""));
-        shown += nextItems.length;
-        if (shown >= episodeItems.length) {
-          moreBtn?.classList.add("hidden");
-        } else {
-          moreBtn?.classList.remove("hidden");
-        }
-        if (!isLogged || !isPremium) {
-          lockEpisodes();
-          if (typeof bindEpisodeCards === "function") {
-            bindEpisodeCards();
-          }
-          return;
-        }
-        const freshCards = Array.from(episodesSection.querySelectorAll(".episode-card"));
-        freshCards.forEach((card) => updateSeenUI(card, isSeen(card.getAttribute("data-episode"))));
-        freshCards.forEach((card) => {
-          const btn = card.querySelector("[data-episode-seen]");
-          if (!btn || btn.dataset.bound) return;
-          btn.dataset.bound = "1";
-          btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const ep = card.getAttribute("data-episode");
-            const next = !isSeen(ep);
-            setSeen(ep, next);
-            if (next) upsertContinue(card);
-            else removeContinue(card);
-            updateSeenUI(card, next);
-          });
+      const renderNextEpisodes = () => {
+        const next = episodeItems.slice(shown, shown + pageSize);
+        if (!next.length) return;
+        const fragment = document.createDocumentFragment();
+        next.forEach((item) => {
+          const div = document.createElement("div");
+          div.innerHTML = renderEpisodeCard(item);
+          fragment.appendChild(div.firstElementChild);
         });
-        const pendingCards = freshCards.filter((card) => card.dataset.episodeEnhanced !== "1");
-        pendingCards.forEach((card) => { card.dataset.episodeEnhanced = "1"; });
-        enrichEpisodeCards(pendingCards).catch(() => {});
-        if (typeof bindEpisodeCards === "function") {
-          bindEpisodeCards();
+        listEl.appendChild(fragment);
+        const addedCards = Array.from(listEl.children).slice(shown);
+        addedCards.forEach((card) => {
+          const ep = card.getAttribute("data-episode");
+          if (ep && isSeen(ep)) {
+            updateSeenUI(card, true);
+          }
+        });
+        shown += next.length;
+        if (shown >= episodeItems.length) {
+          if (moreBtn) moreBtn.classList.add("hidden");
+        } else {
+          if (moreBtn) moreBtn.classList.remove("hidden");
         }
+        if (canWatchEpisodes || isLogged) {
+          if (bindEpisodeCards) bindEpisodeCards();
+          enrichEpisodeCards(addedCards);
+        }
+        lockEpisodes();
       };
-      appendBatch();
-      if (moreBtn) {
-        moreBtn.addEventListener("click", appendBatch);
-      }
+      if (moreBtn) moreBtn.addEventListener("click", renderNextEpisodes);
+      renderNextEpisodes();
+
       const episodesHost = document.getElementById("detail-episodes-host");
       if (episodesHost) {
         episodesHost.appendChild(episodesSection);
@@ -1227,12 +1266,14 @@ const AniDexDetailDataBoot = () => {
       if (!episodeModal) {
         episodeModal = document.createElement("div");
         episodeModal.id = episodeModalId;
-        episodeModal.className = "fixed inset-0 z-[90] hidden";
+        episodeModal.className = "fixed inset-0 z-[110] hidden flex items-center justify-center p-4 sm:p-6";
         episodeModal.innerHTML = `
-          <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-          <div class="relative mx-auto mt-[12vh] w-[min(92vw,720px)] rounded-2xl bg-surface-container-high/95 border border-violet-500/30 p-4 shadow-2xl overflow-hidden" data-episode-shell>
-            <button type="button" data-episode-close class="absolute top-3 right-3 w-9 h-9 rounded-full bg-surface-container-low text-on-surface-variant hover:text-on-surface flex items-center justify-center">x</button>
-            <video data-episode-video-player class="w-full rounded-xl bg-black" controls playsinline preload="metadata">
+          <div class="absolute inset-0 bg-black/80 backdrop-blur-md"></div>
+          <div class="relative w-[min(92vw,720px)] rounded-2xl bg-black shadow-2xl border border-white/10 transform translate-y-6 sm:translate-y-8" data-episode-shell>
+            <button type="button" data-episode-close class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-violet-600 text-white hover:bg-violet-500 flex items-center justify-center z-50 transition-all duration-300 shadow-[0_0_15px_rgba(139,92,246,0.5)] border border-white/20" aria-label="Cerrar">
+              <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+            <video data-episode-video-player class="w-full aspect-video bg-black rounded-2xl" controls playsinline preload="metadata">
               <source data-episode-video-source type="video/mp4" />
             </video>
           </div>
@@ -1246,14 +1287,14 @@ const AniDexDetailDataBoot = () => {
         if (!linkModal) {
           linkModal = document.createElement("div");
           linkModal.id = "detail-episode-link-modal";
-          linkModal.className = "fixed inset-0 z-[90] hidden";
+          linkModal.className = "fixed inset-0 z-[110] hidden flex items-center justify-center p-4 sm:p-6";
           linkModal.innerHTML = `
-            <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-            <div class="relative mx-auto mt-[8vh] w-[min(94vw,1100px)] h-[min(80vh,720px)] overflow-visible" data-link-shell>
-              <button type="button" data-link-close class="absolute -top-5 -right-5 w-10 h-10 rounded-full bg-violet-500 text-white text-lg font-bold shadow-lg shadow-violet-500/40 hover:bg-violet-400 flex items-center justify-center">&times;</button>
-              <div class="w-full h-full overflow-hidden">
-                <iframe data-link-frame class="w-full h-full bg-black" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>
-              </div>
+            <div class="absolute inset-0 bg-black/80 backdrop-blur-md" data-link-backdrop></div>
+            <div class="relative w-[min(94vw,1100px)] h-[min(80vh,720px)] rounded-2xl bg-black shadow-2xl border border-white/10 transform translate-y-6 sm:translate-y-8" data-link-shell>
+              <button type="button" data-link-close class="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-violet-600 text-white hover:bg-violet-500 flex items-center justify-center z-50 transition-all duration-300 shadow-[0_0_20px_rgba(139,92,246,0.5)] border border-white/20" aria-label="Cerrar">
+                <span class="material-symbols-outlined text-[24px]">close</span>
+              </button>
+              <iframe data-link-frame class="w-full h-full border-none rounded-2xl" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>
             </div>
           `;
           document.body.appendChild(linkModal);
@@ -1266,9 +1307,9 @@ const AniDexDetailDataBoot = () => {
         if (!imageModal) {
           imageModal = document.createElement("div");
           imageModal.id = "detail-episode-image-modal";
-          imageModal.className = "fixed inset-0 z-[90] hidden";
+          imageModal.className = "fixed inset-0 z-[110] hidden flex items-center justify-center p-4 sm:p-6";
           imageModal.innerHTML = `
-            <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+            <div class="absolute inset-0 bg-black/80 backdrop-blur-md"></div>
             <div class="relative w-full h-full flex items-center justify-center p-6">
               <div class="relative inline-flex overflow-visible" data-image-shell>
                 <button type="button" data-image-close class="absolute -top-8 -right-12 w-10 h-10 rounded-full bg-violet-500/60 text-white text-lg font-bold shadow-lg shadow-violet-500/40 backdrop-blur hover:bg-violet-400/70 flex items-center justify-center">&times;</button>
@@ -1290,34 +1331,17 @@ const AniDexDetailDataBoot = () => {
         const closeLink = () => {
           if (linkFrame) linkFrame.src = "";
           linkModal.classList.add("hidden");
+          document.body.style.overflow = "";
         };
         const openLink = (card) => {
           const embedLink = card.getAttribute("data-episode-embed") || "";
           const directLink = card.getAttribute("data-episode-link") || "";
-          const link = embedLink || directLink;
+          const link = decodeLink(embedLink || directLink);
           if (!link || !linkFrame) return;
           markSeenByCard(card);
-          const isUqload = /:\/\/(?:www\.)?uqload\.is\//i.test(directLink || link);
-          if (isUqload && directLink) {
-            window.location.href = directLink;
-            return;
-          }
           linkFrame.src = link;
           linkModal.classList.remove("hidden");
-          // Uqload sometimes blocks iframe embeds; fall back to the direct page.
-          if (directLink) {
-            const fallbackTimer = window.setTimeout(() => {
-              if (!linkModal.classList.contains("hidden") && linkFrame.src === link) {
-                window.open(directLink, "_blank", "noopener,noreferrer");
-              }
-            }, 1800);
-            const clearFallback = () => window.clearTimeout(fallbackTimer);
-            linkFrame.addEventListener("load", clearFallback, { once: true });
-            linkFrame.addEventListener("error", () => {
-              clearFallback();
-              window.open(directLink, "_blank", "noopener,noreferrer");
-            }, { once: true });
-          }
+          document.body.style.overflow = "hidden";
         };
         const imageFrame = imageModal.querySelector("[data-image-frame]");
         const imageCloseBtn = imageModal.querySelector("[data-image-close]");
@@ -1325,6 +1349,7 @@ const AniDexDetailDataBoot = () => {
         const closeImage = () => {
           if (imageFrame) imageFrame.removeAttribute("src");
           imageModal.classList.add("hidden");
+          document.body.style.overflow = "";
         };
         const openImage = (card) => {
           const src = card.getAttribute("data-episode-image");
@@ -1334,6 +1359,7 @@ const AniDexDetailDataBoot = () => {
           imageFrame.src = src;
           imageFrame.alt = title;
           imageModal.classList.remove("hidden");
+          document.body.style.overflow = "hidden";
         };
         const linkCards = Array.from(episodesSection.querySelectorAll("[data-episode-link]")).filter((card) => canAccessEpisode(card));
         const imageCards = Array.from(episodesSection.querySelectorAll("[data-episode-image]")).filter((card) => canAccessEpisode(card));
@@ -1388,10 +1414,11 @@ const AniDexDetailDataBoot = () => {
         const openEpisode = () => {
           if (!player || !source) return;
           markSeenByCard(videoCard);
-          source.src = videoCard.getAttribute("data-episode-video") || "";
+          source.src = decodeLink(videoCard.getAttribute("data-episode-video") || "");
           player.load();
           player.currentTime = 0;
           episodeModal.classList.remove("hidden");
+          document.body.style.overflow = "hidden";
           const playPromise = player.play();
           if (playPromise?.catch) playPromise.catch(() => {});
         };
@@ -1402,6 +1429,7 @@ const AniDexDetailDataBoot = () => {
             player.load();
           }
           episodeModal.classList.add("hidden");
+          document.body.style.overflow = "";
         };
         videoCard.addEventListener("click", openEpisode);
         if (closeBtn) closeBtn.addEventListener("click", closeEpisode);
@@ -1424,7 +1452,7 @@ const AniDexDetailDataBoot = () => {
       const episodesValue = full.episodes || "";
       statusLine.className = "text-on-surface-variant font-medium space-y-2 text-sm lg:text-base";
       const yearBlock = (!isMovie || yearValue)
-        ? `<span class="flex flex-col"><span class="text-primary-dim text-xs uppercase tracking-wider">Año</span><span>${yearValue || "N/A"}</span></span>`
+        ? `<span class="flex flex-col"><span class="text-primary-dim text-xs uppercase tracking-wider">A\u00f1o</span><span>${yearValue || "N/A"}</span></span>`
         : "";
       const episodesBlock = !isMovie
         ? `<div><span class="flex flex-col"><span class="text-primary-dim text-xs uppercase tracking-wider">Episodios</span><span>${episodesValue || "N/A"}</span></span></div>`
@@ -1554,7 +1582,7 @@ const AniDexDetailDataBoot = () => {
       charsRow.innerHTML = topChars.map((c, idx) => {
         const cleanName = (c.character?.name || "Personaje").replace(/,/g, "");
         const roleLabel = /main/i.test(c?.role || "") ? "principal" : "secundario";
-        const fallbackMini = "Cargando biografía...";
+        const fallbackMini = `<div class="w-full space-y-1.5 mt-1"><div class="h-2.5 bg-surface-container-highest rounded w-[80%] mx-auto animate-pulse"></div><div class="h-2.5 bg-surface-container-highest rounded w-[60%] mx-auto animate-pulse"></div></div>`;
         const desc = fallbackMini;
         const charId = c.character?.mal_id || "";
         const charImg = c.character?.images?.jpg?.image_url || "";
@@ -1602,7 +1630,6 @@ const AniDexDetailDataBoot = () => {
             }
          }
       };
-      // Fire the background queue asynchronously
       loadBios();
       const prev = document.getElementById("chars-prev");
       const next = document.getElementById("chars-next");
@@ -1668,33 +1695,31 @@ const AniDexDetailDataBoot = () => {
         if (modal) return modal;
         modal = document.createElement("div");
         modal.id = "detail-character-modal";
-        modal.className = "fixed inset-0 z-[95] hidden";
+        modal.className = "fixed inset-0 z-[120] hidden flex items-center justify-center p-4 sm:p-6";
         modal.innerHTML = `
-          <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" data-char-backdrop></div>
-          <div class="relative w-full h-full flex items-center justify-center p-4">
-            <div class="relative w-[min(92vw,560px)] rounded-2xl bg-surface-container-high/95 border border-white/10 shadow-2xl overflow-hidden" data-char-shell>
-              <button type="button" data-char-close class="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/40 text-white/90 hover:text-white hover:bg-violet-500/80 flex items-center justify-center backdrop-blur-md transition-all duration-300 z-10 shadow-lg border border-white/10" aria-label="Cerrar">
-                <span class="material-symbols-outlined text-2xl">close</span>
-              </button>
-              <div class="grid grid-cols-1 sm:grid-cols-[240px_1fr] gap-6 p-6 items-stretch">
-                <div class="w-full h-full min-h-[260px] sm:min-h-[320px] rounded-2xl overflow-hidden bg-black/30 shadow-[0_0_24px_rgba(0,0,0,0.35)] flex items-center justify-center">
-                  <img data-char-img class="max-w-full max-h-full object-contain block" alt="Personaje" />
+          <div class="absolute inset-0 bg-black/80 backdrop-blur-md" data-char-backdrop></div>
+          <div class="relative w-full max-w-2xl rounded-2xl bg-surface-container-high shadow-2xl overflow-hidden border border-white/10" data-char-shell>
+            <button type="button" data-char-close class="absolute top-4 right-4 w-11 h-11 rounded-full bg-black/50 text-white/90 hover:text-white hover:bg-violet-600 flex items-center justify-center backdrop-blur-md z-30 transition-all duration-300 shadow-xl border border-white/10" aria-label="Cerrar">
+              <span class="material-symbols-outlined text-[28px]">close</span>
+            </button>
+            <div class="grid grid-cols-1 sm:grid-cols-[240px_1fr] gap-6 p-6 items-stretch">
+              <div class="w-full h-full min-h-[260px] sm:min-h-[320px] rounded-2xl overflow-hidden bg-black/30 shadow-[0_0_24px_rgba(0,0,0,0.35)] flex items-center justify-center">
+                <img data-char-img class="max-w-full max-h-full object-contain block" alt="Personaje" />
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <h3 data-char-name class="text-2xl font-extrabold font-headline text-on-surface">Personaje</h3>
+                  <p data-char-role class="text-xs uppercase tracking-widest text-primary-dim font-semibold mt-1">Rol</p>
                 </div>
-                <div class="space-y-4">
-                  <div>
-                    <h3 data-char-name class="text-2xl font-extrabold font-headline">Personaje</h3>
-                    <p data-char-role class="text-xs uppercase tracking-widest text-primary-dim font-semibold mt-1">Rol</p>
-                  </div>
-                  <div class="h-px w-16 bg-violet-400/40"></div>
-                  <div>
-                    <h4 class="text-xs uppercase tracking-widest text-on-surface-variant font-semibold">Descripci\u00f3n</h4>
-                    <p data-char-info class="text-sm text-on-surface-variant leading-relaxed mt-2">Cargando información del personaje...</p>
-                  </div>
-                  <div class="h-px w-16 bg-violet-400/40"></div>
-                  <div data-char-fields-wrap>
-                    <h4 class="text-xs uppercase tracking-widest text-on-surface-variant font-semibold">Datos personales</h4>
-                    <div data-char-fields class="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm text-on-surface-variant"></div>
-                  </div>
+                <div class="h-px w-16 bg-violet-400/40"></div>
+                <div>
+                  <h4 class="text-xs uppercase tracking-widest text-on-surface-variant font-semibold">Descripci\u00f3n</h4>
+                  <p data-char-info class="text-sm text-on-surface-variant leading-relaxed mt-2">Cargando informaci\u00f3n del personaje...</p>
+                </div>
+                <div class="h-px w-16 bg-violet-400/40"></div>
+                <div data-char-fields-wrap>
+                  <h4 class="text-xs uppercase tracking-widest text-on-surface-variant font-semibold">Datos personales</h4>
+                  <div data-char-fields class="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm text-on-surface-variant"></div>
                 </div>
               </div>
             </div>
@@ -1758,7 +1783,7 @@ const AniDexDetailDataBoot = () => {
           const data = json?.data || {};
           
           const fieldMap = {
-            "Birthday": "Cumpleaños",
+            "Birthday": "Cumplea\u00f1os",
             "Height": "Altura"
           };
           const fields = [];
@@ -1781,8 +1806,6 @@ const AniDexDetailDataBoot = () => {
             if (fields.some((f) => f.label === label)) return;
             fields.push({ label, value: clean });
           };
-          // addField("Cumpleaños", data?.birthday);
-          // addField("Altura", data?.height);
           if (typeof data?.favorites === "number") {
              addField("Popularidad", ` ${data.favorites} favoritos`);
           }
@@ -1881,7 +1904,7 @@ const AniDexDetailDataBoot = () => {
             continue;
           }
           try {
-            const res = await fetch(`${API}/characters/${charId}/full`);
+            const res = await fetch(`${API}?endpoint=${encodeURIComponent('characters/' + charId + '/full')}`);
             if (!res.ok) throw new Error("fetch failed");
             const json = await res.json();
             const data = json?.data || {};
@@ -1895,7 +1918,6 @@ const AniDexDetailDataBoot = () => {
               "";
             characterCache.set(charId, { miniSummary, img: cachedImg, full: false });
           } catch {
-            // ignore
           }
           await new Promise((r) => setTimeout(r, 180));
         }
@@ -1924,8 +1946,6 @@ const AniDexDetailDataBoot = () => {
       }
     }
 
-    // Galera relacionada eliminada por solicitud.
-
     const external = Array.from(document.querySelectorAll("h3")).find((x) => /enlaces externos/i.test((x.textContent || "").toLowerCase()));
     if (external) external.parentElement?.remove();
 
@@ -1950,7 +1970,6 @@ const AniDexDetailDataBoot = () => {
     document.body.dataset.detailType = (full.type || "").toLowerCase() === "movie" ? "Pel\u00edcula" : "Anime";
     if (window.AniDexFavorites) window.AniDexFavorites.refresh();
 
-    // Recomendados: si es película, mostrar películas; si no, series.
     const recCards = Array.from(document.querySelectorAll("section a.group.cursor-pointer"));
     if (recCards.length) {
       const recType = (full.type || "").toLowerCase() === "movie" ? "movie" : "tv";
@@ -1971,7 +1990,6 @@ const AniDexDetailDataBoot = () => {
       });
     }
 
-    // Zoom simple para imgenes del slider
     document.addEventListener("click", (e) => {
       const img = e.target.closest("img[data-zoomable]");
       if (!img) return;
@@ -1987,15 +2005,3 @@ const AniDexDetailDataBoot = () => {
 };
 
 AniDexDetailDataBoot();
-
-
-
-
-
-
-
-
-
-
-
-

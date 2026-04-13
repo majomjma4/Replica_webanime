@@ -1,5 +1,12 @@
 (() => {
-  const API_BASE = "api/jikan_proxy.php";
+  const appUrl = window.AniDexShared?.buildAppUrl || ((path = "") => String(path || ""));
+  const buildDetailUrl = window.AniDexShared?.buildDetailUrl || ((malId = "", title = "") => {
+    const numericId = String(malId || "").trim();
+    if (/^\d+$/.test(numericId)) return appUrl(`detail/${encodeURIComponent(numericId)}`);
+    const cleanTitle = String(title || "").trim();
+    return cleanTitle ? appUrl(`detail?q=${encodeURIComponent(cleanTitle)}`) : appUrl("detail");
+  });
+  const API_BASE = appUrl("api/jikan_proxy");
   const suggestCache = new Map();
   const hasJapaneseChars = (v) => /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(v || "");
 
@@ -9,7 +16,7 @@
   const logActivity = async (action, details = "") => {
     if (!isLoggedIn) return;
     try {
-      await fetch("api/activity.php", {
+      await fetch(appUrl("api/activity"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, details })
@@ -281,7 +288,7 @@
       if (cardLink && item?.mal_id) {
         cardLink.setAttribute("data-mal-id", String(item.mal_id));
         // Incluir q= para que detail-links y el backend tengan respaldo
-        cardLink.href = `detail?mal_id=${item.mal_id}&q=${encodeURIComponent(cleanTitle)}`;
+        cardLink.href = buildDetailUrl(item.mal_id, cleanTitle);
       }
       const yearEl = card.querySelector("[data-card-year]");
       if (HIDE_CARD_YEARS) {
@@ -311,7 +318,7 @@
   const goToSearchPage = (term, page = "series") => {
     const q = encodeURIComponent(term.trim());
     logActivity("search", `B?squeda: ${term.trim()} en ${page}`);
-    window.location.href = `${page}?q=${q}`;
+    window.location.href = `${appUrl(page)}?q=${q}`;
   };
   const pageForType = (mediaType) => {
     const t = normalize(mediaType);
@@ -399,10 +406,11 @@
       if (!q) return [];
       if (suggestCache.has(q)) return suggestCache.get(q);
       try {
-        const res = await fetch(`${API_BASE}?endpoint=${encodeURIComponent('anime?q=' + encodeURIComponent(q) + '&limit=' + API_SUGGEST_LIMIT + '&order_by=popularity&sort=asc')}`);
+        const blacklist = ["hentai", "futanari", "dick", "pussy", "sex", "porn", "cock", "blowjob"];
+        const res = await fetch(`${API_BASE}?endpoint=${encodeURIComponent('anime?q=' + encodeURIComponent(q) + '&limit=' + API_SUGGEST_LIMIT + '&order_by=popularity&sort=asc&sfw=1')}`);
         if (!res.ok) return [];
         const json = await res.json();
-        const list = (json?.data || []).map((item) => {
+        const rawList = (json?.data || []).map((item) => {
           const base = item?.title || "";
           const english = item?.title_english || "";
           const japanese = item?.title_japanese || "";
@@ -420,6 +428,12 @@
               item?.images?.jpg?.image_url ||
               ""
           };
+        });
+
+        // Filtro estricto de seguridad +18 (Local)
+        const list = rawList.filter(it => {
+          const lower = (it.title + " " + it.titleEn).toLowerCase();
+          return !blacklist.some(word => lower.includes(word));
         });
 
         // Filtro estricto: evita sugerencias que no tienen relacin real.
@@ -490,9 +504,10 @@
       let tvCount = 0;
       items.forEach((it) => {
         const t = normalize(it.mediaType || "");
-        if (t.includes("movie") || t.includes("pelicula") || t.includes("película")) movieCount += 1;
+        if (t.includes("movie") || t.includes("pelicula") || t.includes("pel\u00edcula")) movieCount += 1;
         else tvCount += 1;
       });
+      // index no procesa búsquedas; enviar a series por defecto.
       return movieCount > tvCount ? "peliculas" : "series";
     };
 
@@ -512,12 +527,20 @@
           "w-full text-left px-2 py-2 hover:bg-zinc-800 transition-colors";
         btn.style.borderRadius = "0";
         const subtitle = [it.titleEn].filter(Boolean).join("  ");
+        const isMovie = normalize(it.mediaType || "").includes("movie") || normalize(it.mediaType || "").includes("pelicula") || normalize(it.mediaType || "").includes("pel\u00edcula");
+        const typeBadge = isMovie 
+          ? `<span class="inline-block px-1.5 py-0.5 rounded bg-sky-500/20 border border-sky-500/30 text-sky-400 text-[9px] font-bold uppercase tracking-widest shrink-0 w-[60px] text-center">Película</span>` 
+          : `<span class="inline-block px-1.5 py-0.5 rounded bg-violet-500/20 border border-violet-500/30 text-violet-400 text-[9px] font-bold uppercase tracking-widest shrink-0 w-[60px] text-center">Anime</span>`;
+
         btn.innerHTML = `
-          <div class="flex items-center gap-3">
-            <img src="${it.image || ""}" alt="${it.title}" class="h-14 w-10 object-cover bg-zinc-800" />
-            <div class="min-w-0">
-              <div class="text-sm text-zinc-100 truncate">${it.title}</div>
-              ${subtitle ? `<div class="text-[11px] text-zinc-400 truncate">${subtitle}</div>` : ""}
+          <div class="flex items-center gap-3 w-full">
+            <img src="${it.image || ""}" alt="${it.title}" class="h-14 w-10 object-cover bg-zinc-800 shrink-0" />
+            <div class="min-w-0 flex-1 overflow-hidden">
+              <div class="text-sm text-zinc-100 flex items-center justify-between gap-2">
+                <span class="truncate block" title="${it.title}">${it.title}</span>
+                ${typeBadge}
+              </div>
+              ${subtitle ? `<div class="text-[11px] text-zinc-400 truncate mt-0.5">${subtitle}</div>` : ""}
             </div>
           </div>
         `;
@@ -526,27 +549,14 @@
           closeBox();
           logActivity("search_suggestion_click", `Sugerencia clicada: ${it.title} (ID: ${it.malId})`);
           if (it.malId) {
-            window.location.href = `detail?mal_id=${it.malId}`;
+            window.location.href = buildDetailUrl(it.malId, it.title);
           } else {
             goToSearchPage(it.title, pageForType(it.mediaType));
           }
         });
         b.appendChild(btn);
       });
-      if (items.length > SUGGEST_LIMIT) {
-        const moreBtn = document.createElement("button");
-        moreBtn.type = "button";
-        moreBtn.className =
-          "w-full text-center px-3 py-2 text-sm font-semibold text-primary hover:bg-zinc-800/70 transition-colors border-t border-zinc-800";
-        moreBtn.style.borderRadius = "0";
-        moreBtn.textContent = "Ver m?s";
-        moreBtn.addEventListener("click", () => {
-          closeBox();
-          const page = resolveSuggestPage(items);
-          goToSearchPage(term || input.value || "", page);
-        });
-        b.appendChild(moreBtn);
-      }
+      // Botón de ver más eliminado a petición del usuario
       openBox();
     };
 
@@ -562,11 +572,21 @@
     input.addEventListener("input", () => {
       const isHeaderSearch = input.id !== "filter-search" && input.getAttribute("data-catalog-search") !== "1";
       if (!isHeaderSearch) return;
+
       const term = (input.value || "").trim();
+      
+      // Si está vacío, cerramos todo de inmediato
       if (!term) {
         closeBox();
         return;
       }
+      
+      // Si hay texto, limpiamos las recomendaciones viejas pero mantenemos la caja abierta 
+      // con un indicador de carga para que el usuario sepa que está funcionando.
+      const b = ensureBox();
+      if (b) b.innerHTML = '<div class="px-3 py-3 text-xs text-zinc-500 italic">Buscando...</div>';
+      openBox();
+
       clearTimeout(timer);
       timer = setTimeout(async () => {
         const local = getLocalSuggestions(term);
@@ -610,14 +630,14 @@
         const ok = applyFilter(resolvedTerm);
         if (!ok) {
           if (resolved.malId) {
-            window.location.href = `detail?mal_id=${resolved.malId}`;
+            window.location.href = buildDetailUrl(resolved.malId, resolvedTerm);
           } else {
             goToSearchPage(resolvedTerm, pageForType(resolved.mediaType));
           }
         }
       } else {
         if (resolved.malId) {
-          window.location.href = `detail?mal_id=${resolved.malId}`;
+          window.location.href = buildDetailUrl(resolved.malId, resolvedTerm);
         } else {
           goToSearchPage(resolvedTerm, pageForType(resolved.mediaType));
         }
@@ -669,7 +689,6 @@
 
   window.AniDexSearch = { init };
 })();
-
 
 
 

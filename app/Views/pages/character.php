@@ -23,7 +23,7 @@
     </main>
     <script src="../assets/js/character-data.js"></script>
     <script>document.addEventListener("DOMContentLoaded",()=>window.AniDexCharacterData&&window.AniDexCharacterData.init());</script>
-    <script src="assets/js/layout.js?v=theme3"></script>
+    <script src="assets/js/layout.js?v=theme1"></script>
     <script src="assets/js/shared-utils.js?v=1"></script>
   </body>
 </html>

@@ -58,9 +58,11 @@
             background-color: transparent;
         }
     </style>
+<script src="assets/js/shared-utils.js?v=20260408a" defer></script>
+<script src="assets/js/admin-layout.js?v=20260330a" defer></script>
 </head>
 <body class="flex min-h-screen" data-admin-page="users" data-admin-user-id="<?= e((string) ($_SESSION['user_id'] ?? '')) ?>">
-<div data-admin-sidebar></div>
+<?php include __DIR__ . '/../partials/admin-layout.php'; ?>
 <main class="ml-64 flex-1 flex flex-col">
 <!-- TopAppBar -->
 <header class="fixed top-0 right-0 w-[calc(100%-16rem)] z-40 bg-[#0e0e0e]/70 backdrop-blur-xl flex justify-between items-center h-20 px-12">
@@ -366,7 +368,7 @@
     </div>
   </div>
 </div>
-<script src="assets/js/shared-utils.js?v=20260408a"></script>
+
 <script>
   (async function () {
     const tbody = document.querySelector('tbody');
@@ -418,7 +420,7 @@
 
     // Cargar Usuarios
     try {
-        const res = await fetch('api/users.php?action=list');
+        const res = await fetch("<?= asset_path('api/users') ?>?action=list");
         const data = await res.json();
         if (data.success) {
             renderUsers(data.data);
@@ -625,7 +627,7 @@
         return;
       }
       try {
-        const res = await fetch('api/users.php?action=reset_password', {
+        const res = await fetch("<?= asset_path('api/users') ?>?action=reset_password", {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: modalState.id, password })
@@ -646,7 +648,7 @@
       if (!modalState.id || !modalState.row) return;
       const makeAdmin = !modalState.isAdmin;
       try {
-        const res = await fetch('api/users.php?action=toggle_admin', {
+        const res = await fetch("<?= asset_path('api/users') ?>?action=toggle_admin", {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: modalState.id, make_admin: makeAdmin })
@@ -860,7 +862,7 @@
         if (!deleteState.id || !deleteState.row) return;
 
         try {
-          const res = await fetch('api/users.php?action=delete', {
+          const res = await fetch("<?= asset_path('api/users') ?>?action=delete", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: deleteState.id })
@@ -885,7 +887,7 @@
         if (!unblockState.id || !unblockState.row) return;
 
         try {
-          const res = await fetch('api/users.php?action=toggle_status', {
+          const res = await fetch("<?= asset_path('api/users') ?>?action=toggle_status", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: unblockState.id, activo: 1 })
@@ -922,7 +924,7 @@
         }
 
         try {
-          const res = await fetch('api/users.php?action=block', {
+          const res = await fetch("<?= asset_path('api/users') ?>?action=block", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1022,7 +1024,7 @@
 
   })();
 </script>
-<script src="assets/js/admin-layout.js?v=20260330a"></script>
+
 </body></html>
 
 
